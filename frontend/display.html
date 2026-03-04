@@ -19,11 +19,6 @@
   </div>
 </div>
 
-<!-- Font Size Controls (hidden but usable) -->
-<div class="controls">
-  <button onclick="changeSize(1)">A+</button>
-  <button onclick="changeSize(-1)">A-</button>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -119,10 +114,7 @@ function launchConfetti(){
   });
 }
 
-function changeSize(direction){
-  fontScale += direction * 0.1;
-  document.documentElement.style.setProperty('--scale', fontScale);
-}
+
 </script>
 <div class="bottom-images">
   <img src="images/left.png">
