@@ -2,81 +2,82 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Oscars Admin</title>
+<title>Admin Control</title>
 <link rel="stylesheet" href="style.css">
 <script src="/socket.io/socket.io.js"></script>
 </head>
-<body>
 
-<h1>Admin Control Panel</h1>
+<body class="admin-body">
 
-<div class="admin-box">
-  <label>Category</label>
-  <select id="categorySelect"></select>
-
-  <label>Winner</label>
-  <select id="nomineeSelect"></select>
-
-  <button onclick="setWinner()">Set Winner</button>
+<div class="admin-container">
+  <h1 class="admin-title">Admin Control Panel</h1>
+  <div id="categories"></div>
 </div>
 
 <script>
-const socket = io();
 
+const socket = io();
 let categoriesData = {};
 
 socket.on("INIT", data => {
   categoriesData = data.categories;
-  populateCategories();
+  buildCategories();
 });
 
-function populateCategories() {
-  const categorySelect = document.getElementById("categorySelect");
-  categorySelect.innerHTML = "";
+function buildCategories(){
+
+  const container = document.getElementById("categories");
+  container.innerHTML = "";
 
   Object.keys(categoriesData).forEach(category => {
-    const option = document.createElement("option");
-    option.value = category;
-    option.textContent = category;
-    categorySelect.appendChild(option);
+
+    const row = document.createElement("div");
+    row.className = "category-row";
+
+    const label = document.createElement("div");
+    label.className = "category-label";
+    label.innerText = category;
+
+    const select = document.createElement("select");
+    select.className = "winner-select";
+
+    categoriesData[category].nominees.forEach(nominee=>{
+      const option = document.createElement("option");
+      option.value = nominee;
+      option.textContent = nominee;
+      select.appendChild(option);
+    });
+
+    const button = document.createElement("button");
+    button.className = "winner-button";
+    button.innerText = "Set Winner";
+
+    button.onclick = () => {
+
+      fetch("/winner",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "x-admin":"oscars2025"
+        },
+        body:JSON.stringify({
+          category: category,
+          nominee: select.value
+        })
+      });
+
+    };
+
+    row.appendChild(label);
+    row.appendChild(select);
+    row.appendChild(button);
+
+    container.appendChild(row);
+
   });
 
-  populateNominees();
 }
 
-function populateNominees() {
-  const category = document.getElementById("categorySelect").value;
-  const nomineeSelect = document.getElementById("nomineeSelect");
-
-  nomineeSelect.innerHTML = "";
-
-  if (!categoriesData[category]) return;
-
-  categoriesData[category].nominees.forEach(nominee => {
-    const option = document.createElement("option");
-    option.value = nominee;
-    option.textContent = nominee;
-    nomineeSelect.appendChild(option);
-  });
-}
-
-document.getElementById("categorySelect").addEventListener("change", populateNominees);
-
-async function setWinner() {
-  const category = document.getElementById("categorySelect").value;
-  const nominee = document.getElementById("nomineeSelect").value;
-
-  await fetch("/winner", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-admin": "oscars2025"
-    },
-    body: JSON.stringify({ category, nominee })
-  });
-
-  alert("Winner announced!");
-}
 </script>
 
 </body>
