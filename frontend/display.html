@@ -29,36 +29,43 @@ let fontScale = 1;
 const socket = io();
 let fontScale = 1;
 
-socket.on("LEADERBOARD", data=>{
+socket.on("LEADERBOARD", data => {
+
   const div = document.getElementById("leaderboard");
   div.innerHTML = "";
 
   if(!data || data.length === 0){
-   div.innerHTML = `<div class="tabulating">VOTES ARE BEING TABULATED</div>`;
+    div.innerHTML = `<div class="tabulating">VOTES ARE BEING TABULATED</div>`;
     return;
   }
 
-  // Sort highest score first
+  // Check if all scores are zero (no winners yet)
+  const noWinnersYet = data.every(p => p.score === 0);
+
+  if(noWinnersYet){
+    div.innerHTML = `<div class="tabulating">VOTES ARE BEING TABULATED</div>`;
+    return;
+  }
+
   data.sort((a,b)=>b.score-a.score);
 
-  // Determine top 5 positions with tie logic
-  let display = [];
-  let i = 0;
+  const top5 = data.slice(0,5);
 
-  while(display.length < 5 && i < data.length){
-    let score = data[i].score;
-    let tied = data.filter(p=>p.score === score);
+  top5.forEach((p,index)=>{
 
-    if(tied.length > 1 && display.length === 0){
-      display.push(`${tied.length} people tied for 1st`);
-      break;
-    }
+    if(!p.name) return;
 
-    tied.forEach(p=>{
-      if(display.length < 5){
-        display.push(`${p.name} — ${p.score}`);
-      }
-    });
+    div.innerHTML += `
+      <div class="entry">
+        <span class="rank">#${index+1}</span>
+        <span class="name">${p.name}</span>
+        <span class="score">${p.score}</span>
+      </div>
+    `;
+
+  });
+
+});
 
     i += tied.length;
   }
