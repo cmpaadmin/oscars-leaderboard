@@ -31,32 +31,46 @@
 const socket = io();
 let fontScale = 1;
 
+const socket = io();
+let fontScale = 1;
+
 socket.on("LEADERBOARD", data=>{
-  const div=document.getElementById("leaderboard");
-  div.innerHTML="";
+  const div = document.getElementById("leaderboard");
+  div.innerHTML = "";
 
-  // Remove undefined entries and take top 5 only
- const clean = data.filter(p=>p.name).slice(0,5);
+  if(!data || data.length === 0){
+    div.innerHTML = `<div class="entry">Waiting for picks...</div>`;
+    return;
+  }
 
-if(clean.length === 0){
-  div.innerHTML = `<div class="entry">Waiting for results...</div>`;
-  return;
-}
-const clean = data.filter(p=>p.name).slice(0,5);
+  // Sort highest score first
+  data.sort((a,b)=>b.score-a.score);
 
-if(clean.length === 0){
-  div.innerHTML = `<div class="entry">Waiting for results...</div>`;
-  return;
-}
+  // Determine top 5 positions with tie logic
+  let display = [];
+  let i = 0;
 
-clean.forEach((p,index)=>{
-  div.innerHTML+=`
-    <div class="entry">
-      <span class="rank">#${index+1}</span>
-      <span class="name">${p.name}</span>
-      <span class="score">${p.score}</span>
-    </div>
-  `;
+  while(display.length < 5 && i < data.length){
+    let score = data[i].score;
+    let tied = data.filter(p=>p.score === score);
+
+    if(tied.length > 1 && display.length === 0){
+      display.push(`${tied.length} people tied for 1st`);
+      break;
+    }
+
+    tied.forEach(p=>{
+      if(display.length < 5){
+        display.push(`${p.name} — ${p.score}`);
+      }
+    });
+
+    i += tied.length;
+  }
+
+  display.forEach(text=>{
+    div.innerHTML += `<div class="entry">${text}</div>`;
+  });
 });
 
   clean.forEach((p,index)=>{
@@ -110,6 +124,10 @@ function changeSize(direction){
   document.documentElement.style.setProperty('--scale', fontScale);
 }
 </script>
-
+<div class="bottom-images">
+  <img src="images/left.png">
+  <img class="center" src="images/center.png">
+  <img src="images/right.png">
+</div>
 </body>
 </html>
