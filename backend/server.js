@@ -74,14 +74,27 @@ res.on("end",()=>parseGoogleCSV(data));
 
 
 /* PARSE GOOGLE SHEET */
-
 function parseGoogleCSV(csvText){
 
 const rows = [];
-
 const lines = csvText.split("\n");
 
-const headers = lines[0].split(",");
+if(lines.length < 2) return;
+
+const headers = lines[0].split(",").map(h => h.trim());
+
+/* automatically detect the name column */
+
+let nameColumn = headers.find(h =>
+  h.toLowerCase().includes("name")
+);
+
+if(!nameColumn){
+  console.log("No name column found in sheet");
+  return;
+}
+
+/* build row objects */
 
 for(let i=1;i<lines.length;i++){
 
@@ -92,44 +105,37 @@ const values = lines[i].split(",");
 const row = {};
 
 headers.forEach((h,index)=>{
-
-row[h.trim()] = values[index]?.trim();
-
+row[h] = values[index]?.trim();
 });
 
 rows.push(row);
 
 }
 
-
+/* rebuild picks */
 
 picks = [];
 
 rows.forEach(row=>{
 
-const name =
-  row["Name"] ||
-  row["Your Name"] ||
-  row["What is your name?"] ||
-  row["Full Name"];
+const name = row[nameColumn];
 
 headers.forEach(header=>{
 
 if(
-header !== "Timestamp" &&
-header !== "Name" &&
-header !== "Your Name" &&
-header !== "What is your name?" &&
-header !== "Email" &&
-header !== "Email Address"
+header !== nameColumn &&
+!header.toLowerCase().includes("timestamp") &&
+!header.toLowerCase().includes("email")
 ){
 
-if(row[header]){
+const nominee = row[header];
+
+if(nominee){
 
 picks.push({
 name:name,
 category:header,
-nominee:row[header]
+nominee:nominee
 });
 
 }
@@ -139,10 +145,13 @@ nominee:row[header]
 });
 
 });
+
+console.log("Picks loaded:", picks.length);
 
 recalcLeaderboard();
 
 }
+
 
 
 
