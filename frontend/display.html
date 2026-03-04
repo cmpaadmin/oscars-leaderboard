@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Oscars Display</title>
+<link rel="stylesheet" href="style.css">
+<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<h1>Oscars Leaderboard</h1>
+<div id="leaderboard"></div>
+<div class="bottom-images">
+<img src="images/left.png">
+<img class="center" src="images/center.png">
+<img src="images/right.png">
+</div>
+<script>
+const socket = io();
+socket.on("LEADERBOARD", data=>{
+  const div=document.getElementById("leaderboard");
+  div.innerHTML="";
+  data.forEach(p=>{
+    div.innerHTML+=`<div>${p.name} - ${p.score}</div>`;
+  });
+});
+</script>
+</body>
+</html>

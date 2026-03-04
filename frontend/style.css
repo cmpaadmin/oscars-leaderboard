@@ -1,0 +1,16 @@
+body{
+margin:0;
+background:url("images/background.jpg") center/cover no-repeat fixed;
+color:white;
+font-family:Arial;
+}
+.bottom-images{
+position:fixed;
+bottom:10px;
+width:100%;
+display:flex;
+justify-content:space-between;
+padding:0 40px;
+}
+.bottom-images img{height:60px;}
+.bottom-images .center{position:absolute;left:50%;transform:translateX(-50%);}
