@@ -52,9 +52,12 @@ socket.on("LEADERBOARD", data => {
 
   if(!data || data.length === 0) return;
 
-  const noWinnersYet = data.every(p => p.score === 0);
+  const tab = document.getElementById("tabulatingMessage");
 
-  if(noWinnersYet) return;
+  // If scores now exist, remove tabulation message
+  if(tab && data.some(p => p.score > 0)){
+    tab.remove();
+  }
 
   div.innerHTML = "";
 
@@ -98,8 +101,16 @@ socket.on("LEADERBOARD", data => {
 });
 
 socket.on("WINNER", data=>{
+
+  // Remove tabulating message
+  const tab = document.getElementById("tabulatingMessage");
+  if(tab){
+    tab.remove();
+  }
+
   showOverlay(data);
   launchConfetti();
+
 });
 
 function showOverlay(data){
