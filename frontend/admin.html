@@ -55,17 +55,25 @@ button.dataset.category = category;
 
 button.onclick = () => {
 
-  fetch("/winner",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "x-admin":"oscars2025"
-    },
-    body:JSON.stringify({
-      category: category,
-      nominee: select.value
-    })
-  });
+button.onclick = async () => {
+
+await fetch("/winner",{
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json",
+    "x-admin":"oscars2025"
+  },
+  body:JSON.stringify({
+    category: category,
+    nominee: select.value
+  })
+});
+
+button.innerText = "Winner Selected";
+button.classList.add("winner-chosen");
+row.classList.add("category-complete");
+
+};
 
   button.innerText = "Winner Selected";
   button.classList.add("winner-chosen");
