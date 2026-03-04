@@ -53,21 +53,24 @@ button.className = "winner-button";
 button.innerText = "Set Winner";
 button.dataset.category = category;
 
-    button.onclick = () => {
+button.onclick = () => {
 
-      fetch("/winner",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "x-admin":"oscars2025"
-        },
-        body:JSON.stringify({
-          category: category,
-          nominee: select.value
-        })
-      });
+  fetch("/winner",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-admin":"oscars2025"
+    },
+    body:JSON.stringify({
+      category: category,
+      nominee: select.value
+    })
+  });
 
-    };
+  button.innerText = "Winner Selected";
+  button.classList.add("winner-chosen");
+
+};
 
     row.appendChild(label);
     row.appendChild(select);
