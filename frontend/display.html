@@ -43,7 +43,11 @@ VOTES ARE BEING TABULATED<span id="dots"></span>
 <script>
 
 const socket = io();
+console.log("Display connected to socket");
+  
 socket.on("LEADERBOARD", data => {
+
+console.log("Leaderboard received:", data);
 
 console.log("Leaderboard data:", data);
 
