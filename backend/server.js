@@ -119,9 +119,19 @@ console.log("No rows found in sheet");
 return;
 }
 
-const headers = Object.keys(rows[0]);
+const headers = Object.keys(rows[0])
+.map(h => h.trim())
+.filter(h => h.length > 0);
 
-const nameColumn = headers[1];   // Google Forms always puts name in column 2
+/* normalize headers */
+
+const cleanedHeaders = headers.map(h =>
+  h.replace(/\r/g,"")
+   .replace(/\n/g," ")
+   .trim()
+);
+
+const nameColumn = cleanedHeaders[1];  // Google Forms always puts name in column 2
 
 console.log("Using name column:",nameColumn);
 
@@ -131,7 +141,7 @@ rows.forEach((row)=>{
 
 const name = row[nameColumn];
 
-headers.forEach((header)=>{
+cleanedHeaders.forEach((header)=>{
 
 if(
 header !== headers[0] && // timestamp
