@@ -6,7 +6,7 @@ import csv from "csv-parser";
 import https from "https";
 
 const ADMIN_PASSWORD = "f1!msk00lF$U";
-const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1mfO73uNkVsp64qdkmgdUsOO93xiyk7gbxxfocIBYd7A/edit?gid=1643430082#gid=1643430082";
+const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOW0D_7N_4XAuMQKM71quXgdPKFj3h52QF_rCAIo5-Uo3WQAjDOqHQr3JrfiemGkh644Yp-W8G2PrF/pub?output=csv";
 
 const app = express();
 const server = http.createServer(app);
