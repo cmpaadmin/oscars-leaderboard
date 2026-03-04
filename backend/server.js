@@ -68,12 +68,23 @@ function parseGoogleCSV(csvText) {
 
 function recalcLeaderboard() {
   const scores = {};
+
+  // Ensure every participant appears
   picks.forEach(p => {
     if (!scores[p.name]) scores[p.name] = 0;
-    if (winners[p.category] === p.nominee) scores[p.name] += categories[p.category]?.points || 1;
   });
-  leaderboard = Object.entries(scores).map(([name, score]) => ({ name, score }))
+
+  // Add points for correct picks
+  picks.forEach(p => {
+    if (winners[p.category] === p.nominee) {
+      scores[p.name] += categories[p.category]?.points || 1;
+    }
+  });
+
+  leaderboard = Object.entries(scores)
+    .map(([name, score]) => ({ name, score }))
     .sort((a,b)=>b.score-a.score);
+
   io.emit("LEADERBOARD", leaderboard);
 }
 
