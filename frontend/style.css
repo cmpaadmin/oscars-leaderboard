@@ -5,42 +5,57 @@
 
 body{
   margin:0;
-  background:black;
+  background:url("images/background.jpg") center/cover no-repeat fixed;
   color:var(--gold);
   font-family:Georgia, serif;
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
+  overflow:hidden;
 }
 
 #leaderboard{
   text-align:center;
   width:80%;
+  z-index:2;
 }
 
 .entry{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
   margin:20px 0;
   font-size:calc(3rem * var(--scale));
   font-weight:bold;
-  letter-spacing:2px;
 }
 
-.rank{
-  width:15%;
+/* Bottom image bar */
+
+.bottom-images{
+  position:fixed;
+  bottom:20px;
+  left:0;
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  padding:0 80px;
+  box-sizing:border-box;
+  z-index:1;
 }
 
-.name{
-  width:55%;
-  text-align:center;
+.bottom-images img{
+  height:70px;
 }
 
-.score{
-  width:15%;
+.bottom-images img:first-child{
+  height:120px;
 }
+
+.bottom-images .center{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+}
+
+/* Winner popup */
 
 .overlay{
   position:fixed;
@@ -48,7 +63,7 @@ body{
   left:0;
   width:100%;
   height:100%;
-  background:rgba(0,0,0,0.9);
+  background:rgba(0,0,0,0.85);
   display:flex;
   justify-content:center;
   align-items:center;
@@ -60,7 +75,6 @@ body{
 .overlay-content{
   text-align:center;
   font-size:4rem;
-  color:var(--gold);
 }
 
 .hidden{
@@ -76,7 +90,8 @@ body{
   opacity:0;
 }
 
-/* Small hidden controls bottom left */
+/* Text size controls */
+
 .controls{
   position:fixed;
   bottom:20px;
@@ -84,7 +99,6 @@ body{
 }
 
 .controls button{
-  font-size:20px;
-  padding:10px;
-  margin-right:5px;
+  font-size:18px;
+  padding:8px;
 }
