@@ -20,7 +20,8 @@ socket.on("LEADERBOARD", data=>{
   const div=document.getElementById("leaderboard");
   div.innerHTML="";
   data.forEach(p=>{
-    div.innerHTML+=`<div>${p.name} - ${p.score}</div>`;
+  if(!p.name) return;
+  div.innerHTML+=`<div class="entry">${p.name} — ${p.score}</div>`;
   });
 });
 </script>
