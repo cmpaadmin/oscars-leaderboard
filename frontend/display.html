@@ -71,6 +71,8 @@ dots.innerText = ".".repeat(dotCount);
 
 socket.on("LEADERBOARD", data => {
 
+console.log("Leaderboard received:", data);
+
 const div = document.getElementById("leaderboard");
 
 if(!data || data.length === 0) return;
