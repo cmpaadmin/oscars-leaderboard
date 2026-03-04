@@ -5,8 +5,8 @@ import fs from "fs";
 import csv from "csv-parser";
 import https from "https";
 
-const ADMIN_PASSWORD = "oscars2025";
-const GOOGLE_SHEET_URL = "PASTE_YOUR_PUBLISHED_CSV_URL_HERE";
+const ADMIN_PASSWORD = "f1!msk00lF$U";
+const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1mfO73uNkVsp64qdkmgdUsOO93xiyk7gbxxfocIBYd7A/edit?gid=1643430082#gid=1643430082";
 
 const app = express();
 const server = http.createServer(app);
