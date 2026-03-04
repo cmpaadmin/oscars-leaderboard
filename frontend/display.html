@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta charset="UTF-8">
@@ -24,7 +25,8 @@ VOTES ARE BEING TABULATED<span id="dots"></span>
 </div>
 
 
-<!-- Winner Popup -->
+
+<!-- Winner popup -->
 
 <div id="winnerOverlay" class="overlay hidden">
 
@@ -40,25 +42,18 @@ VOTES ARE BEING TABULATED<span id="dots"></span>
 
 </div>
 
+
+
 <script>
 
 const socket = io();
-console.log("Display connected to socket");
-  
-socket.on("LEADERBOARD", data => {
 
-console.log("Leaderboard received:", data);
-
-console.log("Leaderboard data:", data);
-
-const div = document.getElementById("leaderboard");
 let dotCount = 0;
-
 
 
 /* animated dots */
 
-setInterval(() => {
+setInterval(()=>{
 
 const dots = document.getElementById("dots");
 
@@ -72,7 +67,6 @@ dots.innerText = ".".repeat(dotCount);
 
 
 
-
 /* leaderboard update */
 
 socket.on("LEADERBOARD", data => {
@@ -81,22 +75,15 @@ const div = document.getElementById("leaderboard");
 
 if(!data || data.length === 0) return;
 
-
-
 data.sort((a,b)=>b.score-a.score);
-
-
 
 const top5 = data.slice(0,5);
 
-
-
-/* if everyone has zero score keep tabulating message */
+/* if everyone still has zero score */
 
 const noWinnersYet = top5.every(p => p.score === 0);
 
 if(noWinnersYet) return;
-
 
 
 /* remove tabulating message */
@@ -105,30 +92,19 @@ const tab = document.getElementById("tabulatingMessage");
 
 if(tab) tab.remove();
 
-
-
 div.innerHTML = "";
-
 
 
 top5.forEach((p,index)=>{
 
 if(!p.name) return;
 
-
-
 div.innerHTML += `
-
 <div class="entry">
-
 <span class="rank">#${index+1}</span>
-
 <span class="name">${p.name}</span>
-
 <span class="score">${p.score}</span>
-
 </div>
-
 `;
 
 });
@@ -137,16 +113,13 @@ div.innerHTML += `
 
 
 
-
-/* winner event */
+/* winner popup */
 
 socket.on("WINNER", data=>{
 
 const tab = document.getElementById("tabulatingMessage");
 
 if(tab) tab.remove();
-
-
 
 showOverlay(data);
 
@@ -156,44 +129,26 @@ launchConfetti();
 
 
 
-
 function showOverlay(data){
 
 const overlay = document.getElementById("winnerOverlay");
 
-
-
 document.getElementById("overlayCategory").innerText = data.category;
-
 document.getElementById("overlayWinner").innerText = data.winner;
-
 document.getElementById("overlayMost").innerText = data.mostChosen || "N/A";
 
-
-
 overlay.classList.remove("hidden");
-
 overlay.classList.add("fade-in");
-
-
 
 setTimeout(()=>{
 
 overlay.classList.remove("fade-in");
-
 overlay.classList.add("fade-out");
 
-
-
 setTimeout(()=>{
-
 overlay.classList.add("hidden");
-
 overlay.classList.remove("fade-out");
-
 },1000);
-
-
 
 },10000);
 
@@ -204,13 +159,9 @@ overlay.classList.remove("fade-out");
 function launchConfetti(){
 
 confetti({
-
 particleCount:250,
-
 spread:130,
-
 origin:{y:0.6}
-
 });
 
 }
