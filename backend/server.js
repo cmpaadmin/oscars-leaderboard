@@ -79,10 +79,35 @@ function recalcLeaderboard() {
 
 app.post("/winner",(req,res)=>{
   if(req.headers["x-admin"]!==ADMIN_PASSWORD) return res.sendStatus(403);
+
   const {category, nominee} = req.body;
   winners[category]=nominee;
+
+  // Calculate most chosen nominee
+  const counts = {};
+  picks
+    .filter(p => p.category === category)
+    .forEach(p => {
+      counts[p.nominee] = (counts[p.nominee] || 0) + 1;
+    });
+
+  let mostChosen = null;
+  let max = 0;
+  for (const n in counts) {
+    if (counts[n] > max) {
+      max = counts[n];
+      mostChosen = n;
+    }
+  }
+
   recalcLeaderboard();
-  io.emit("WINNER",{category,winner:nominee});
+
+  io.emit("WINNER",{
+    category,
+    winner: nominee,
+    mostChosen
+  });
+
   res.sendStatus(200);
 });
 
