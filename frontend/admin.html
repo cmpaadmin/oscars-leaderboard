@@ -48,9 +48,10 @@ function buildCategories(){
       select.appendChild(option);
     });
 
-    const button = document.createElement("button");
-    button.className = "winner-button";
-    button.innerText = "Set Winner";
+   const button = document.createElement("button");
+button.className = "winner-button";
+button.innerText = "Set Winner";
+button.dataset.category = category;
 
     button.onclick = () => {
 
