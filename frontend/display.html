@@ -36,7 +36,22 @@ socket.on("LEADERBOARD", data=>{
   div.innerHTML="";
 
   // Remove undefined entries and take top 5 only
-  const clean = data.filter(p=>p.name).slice(0,5);
+ const clean = data.filter(p=>p.name).slice(0,5);
+
+if(clean.length === 0){
+  div.innerHTML = `<div class="entry">Waiting for results...</div>`;
+  return;
+}
+
+clean.forEach((p,index)=>{
+  div.innerHTML+=`
+    <div class="entry">
+      <span class="rank">#${index+1}</span>
+      <span class="name">${p.name}</span>
+      <span class="score">${p.score}</span>
+    </div>
+  `;
+});
 
   clean.forEach((p,index)=>{
     div.innerHTML+=`
