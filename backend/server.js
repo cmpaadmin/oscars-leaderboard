@@ -85,14 +85,11 @@ const headers = lines[0].split(",").map(h => h.trim());
 
 /* automatically detect the name column */
 
-let nameColumn = headers.find(h =>
-  h.toLowerCase().includes("name")
-);
+/* Google Forms always puts name in column 2 */
 
-if(!nameColumn){
-  console.log("No name column found in sheet");
-  return;
-}
+let nameColumn = headers[1];
+
+console.log("Using name column:", nameColumn);
 
 /* build row objects */
 
