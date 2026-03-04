@@ -42,6 +42,12 @@ if(clean.length === 0){
   div.innerHTML = `<div class="entry">Waiting for results...</div>`;
   return;
 }
+const clean = data.filter(p=>p.name).slice(0,5);
+
+if(clean.length === 0){
+  div.innerHTML = `<div class="entry">Waiting for results...</div>`;
+  return;
+}
 
 clean.forEach((p,index)=>{
   div.innerHTML+=`
