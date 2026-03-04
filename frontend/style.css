@@ -13,6 +13,7 @@ body{
   align-items:center;
   height:100vh;
   overflow:hidden;
+  position:relative;
 }
 
 #leaderboard{
@@ -149,10 +150,15 @@ body{
 /* Tabulation message */
 
 .tabulating{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
   font-size:calc(5rem * var(--scale));
   text-align:center;
   letter-spacing:6px;
   font-weight:bold;
+  color:#D4AF37;
   animation: glow 2s ease-in-out infinite alternate;
 }
 
