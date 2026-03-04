@@ -34,7 +34,7 @@ socket.on("LEADERBOARD", data=>{
   div.innerHTML = "";
 
   if(!data || data.length === 0){
-    div.innerHTML = `<div class="entry">Waiting for picks...</div>`;
+   div.innerHTML = `<div class="tabulating">VOTES ARE BEING TABULATED</div>`;
     return;
   }
 
