@@ -43,7 +43,11 @@ VOTES ARE BEING TABULATED<span id="dots"></span>
 <script>
 
 const socket = io();
+socket.on("LEADERBOARD", data => {
 
+console.log("Leaderboard data:", data);
+
+const div = document.getElementById("leaderboard");
 let dotCount = 0;
 
 
