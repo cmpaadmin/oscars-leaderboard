@@ -2,8 +2,9 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import fs from "fs";
-import csv from "csv-parser";
 import https from "https";
+import csv from "csv-parser";
+import { Readable } from "stream";
 
 const ADMIN_PASSWORD = "f1!msk00lF$U";
 const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOW0D_7N_4XAuMQKM71quXgdPKFj3h52QF_rCAIo5-Uo3WQAjDOqHQr3JrfiemGkh644Yp-W8G2PrF/pub?gid=1643430082&single=true&output=csv";
@@ -21,17 +22,22 @@ let winners = {};
 let leaderboard = [];
 
 
-/* LOAD CATEGORY CSV */
+/* ---------------------------
+   LOAD CATEGORY CSV
+----------------------------*/
 
 function loadCategories(){
 
 categories = {};
 
-if(!fs.existsSync("backend/data/categories.csv")) return;
+if(!fs.existsSync("backend/data/categories.csv")){
+console.log("No categories.csv found");
+return;
+}
 
 fs.createReadStream("backend/data/categories.csv")
 .pipe(csv())
-.on("data", row => {
+.on("data",(row)=>{
 
 if(!categories[row.category]){
 
@@ -45,43 +51,64 @@ points:parseInt(row.points || 1)
 categories[row.category].nominees.push(row.nominee);
 
 })
-.on("end", ()=>{
+.on("end",()=>{
+
+console.log("Categories loaded:",Object.keys(categories).length);
+
 recalcLeaderboard();
+
 });
 
 }
 
 
-
-/* FETCH GOOGLE SHEET */
+/* ---------------------------
+   FETCH GOOGLE SHEET
+----------------------------*/
 
 function fetchGoogleSheet(){
 
-if(!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes("PASTE")) return;
+if(!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes("PASTE")){
+console.log("Google Sheet URL not configured");
+return;
+}
 
-https.get(GOOGLE_SHEET_URL,res=>{
+https.get(GOOGLE_SHEET_URL,(res)=>{
 
 let data="";
 
-res.on("data",chunk=>data+=chunk);
+res.on("data",(chunk)=>data+=chunk);
 
-res.on("end",()=>parseGoogleCSV(data));
+res.on("end",()=>{
 
-}).on("error",err=>console.log(err));
+if(!data.includes("Timestamp")){
+console.log("Sheet response invalid");
+return;
+}
+
+parseGoogleCSV(data);
+
+});
+
+}).on("error",(err)=>{
+
+console.log("Google fetch failed",err);
+
+});
 
 }
 
 
+/* ---------------------------
+   PARSE GOOGLE SHEET CSV
+----------------------------*/
 
-/* PARSE GOOGLE SHEET */
 function parseGoogleCSV(csvText){
 
 const rows = [];
 
-require("stream")
-.Readable
-.from(csvText)
-.pipe(require("csv-parser")())
+Readable.from(csvText)
+.pipe(csv())
 .on("data",(row)=>{
 rows.push(row);
 })
@@ -94,17 +121,17 @@ return;
 
 const headers = Object.keys(rows[0]);
 
-const nameColumn = headers[1];
+const nameColumn = headers[1];   // Google Forms always puts name in column 2
 
-console.log("Using name column:", nameColumn);
+console.log("Using name column:",nameColumn);
 
 picks = [];
 
-rows.forEach(row=>{
+rows.forEach((row)=>{
 
 const name = row[nameColumn];
 
-headers.forEach(header=>{
+headers.forEach((header)=>{
 
 if(
 header !== headers[0] && // timestamp
@@ -130,7 +157,7 @@ nominee:nominee
 
 });
 
-console.log("Picks loaded:", picks.length);
+console.log("Picks loaded:",picks.length);
 
 recalcLeaderboard();
 
@@ -138,56 +165,16 @@ recalcLeaderboard();
 
 }
 
-/* rebuild picks */
 
-picks = [];
-
-rows.forEach(row=>{
-
-const name = row[nameColumn];
-
-headers.forEach(header=>{
-
-if(
-header !== nameColumn &&
-!header.toLowerCase().includes("timestamp") &&
-!header.toLowerCase().includes("email")
-){
-
-const nominee = row[header];
-
-if(nominee){
-
-picks.push({
-name:name,
-category:header,
-nominee:nominee
-});
-
-}
-
-}
-
-});
-
-});
-
-console.log("Picks loaded:", picks.length);
-
-recalcLeaderboard();
-
-}
-
-
-
-
-/* CALCULATE LEADERBOARD */
+/* ---------------------------
+   CALCULATE LEADERBOARD
+----------------------------*/
 
 function recalcLeaderboard(){
 
 const scores = {};
 
-picks.forEach(p=>{
+picks.forEach((p)=>{
 
 if(!scores[p.name]) scores[p.name] = 0;
 
@@ -208,8 +195,9 @@ io.emit("LEADERBOARD",leaderboard);
 }
 
 
-
-/* FIND MOST CHOSEN */
+/* ---------------------------
+   FIND MOST CHOSEN NOMINEE
+----------------------------*/
 
 function mostChosen(category){
 
@@ -217,7 +205,7 @@ const counts = {};
 
 picks
 .filter(p=>p.category === category)
-.forEach(p=>{
+.forEach((p)=>{
 
 counts[p.nominee] = (counts[p.nominee] || 0) + 1;
 
@@ -226,13 +214,11 @@ counts[p.nominee] = (counts[p.nominee] || 0) + 1;
 let max = 0;
 let winner = null;
 
-for(const n in counts){
+for(const nominee in counts){
 
-if(counts[n] > max){
-
-max = counts[n];
-winner = n;
-
+if(counts[nominee] > max){
+max = counts[nominee];
+winner = nominee;
 }
 
 }
@@ -242,13 +228,15 @@ return winner;
 }
 
 
-
-/* ADMIN SELECT WINNER */
+/* ---------------------------
+   ADMIN SELECT WINNER
+----------------------------*/
 
 app.post("/winner",(req,res)=>{
 
-if(req.headers["x-admin"] !== ADMIN_PASSWORD)
+if(req.headers["x-admin"] !== ADMIN_PASSWORD){
 return res.sendStatus(403);
+}
 
 const {category,nominee} = req.body;
 
@@ -267,10 +255,11 @@ res.sendStatus(200);
 });
 
 
+/* ---------------------------
+   SOCKET CONNECTION
+----------------------------*/
 
-/* SOCKET CONNECTION */
-
-io.on("connection",socket=>{
+io.on("connection",(socket)=>{
 
 socket.emit("INIT",{
 categories,
@@ -281,12 +270,17 @@ winners
 });
 
 
+/* ---------------------------
+   START SERVER
+----------------------------*/
 
 loadCategories();
 fetchGoogleSheet();
 
 setInterval(fetchGoogleSheet,30000);
 
+const PORT = process.env.PORT || 3000;
 
-
-server.listen(process.env.PORT || 3000);
+server.listen(PORT,()=>{
+console.log("Server running on port",PORT);
+});
