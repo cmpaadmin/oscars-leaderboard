@@ -27,6 +27,19 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 <script>
+  let dotCount = 0;
+
+setInterval(() => {
+
+  const dots = document.getElementById("dots");
+
+  if(!dots) return;
+
+  dotCount = (dotCount + 1) % 4;
+
+  dots.innerText = ".".repeat(dotCount);
+
+}, 500);
 const socket = io();
 let fontScale = 1;
 
@@ -36,20 +49,14 @@ let fontScale = 1;
 socket.on("LEADERBOARD", data => {
 
   const div = document.getElementById("leaderboard");
-  div.innerHTML = "";
 
-  if(!data || data.length === 0){
-    div.innerHTML = `<div class="tabulating">VOTES ARE BEING TABULATED</div>`;
-    return;
-  }
+  if(!data || data.length === 0) return;
 
-  // Check if all scores are zero (no winners yet)
   const noWinnersYet = data.every(p => p.score === 0);
 
-  if(noWinnersYet){
-    div.innerHTML = `<div class="tabulating">VOTES ARE BEING TABULATED</div>`;
-    return;
-  }
+  if(noWinnersYet) return;
+
+  div.innerHTML = "";
 
   data.sort((a,b)=>b.score-a.score);
 
