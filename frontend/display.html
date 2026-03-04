@@ -2,37 +2,50 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Oscars Display</title>
+<title>Leaderboard</title>
 <link rel="stylesheet" href="style.css">
 <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-<h1>Oscars Leaderboard</h1>
+
 <div id="leaderboard"></div>
-<div class="bottom-images">
-<img src="images/left.png">
-<img class="center" src="images/center.png">
-<img src="images/right.png">
-</div>
-  <div id="winnerOverlay" class="overlay hidden">
+
+<!-- Winner Popup -->
+<div id="winnerOverlay" class="overlay hidden">
   <div class="overlay-content">
     <h2 id="overlayCategory"></h2>
-    <p><strong>Winner:</strong> <span id="overlayWinner"></span></p>
-    <p><strong>Most Chosen:</strong> <span id="overlayMost"></span></p>
+    <p>Winner: <span id="overlayWinner"></span></p>
+    <p>Most Chosen: <span id="overlayMost"></span></p>
   </div>
 </div>
 
-<canvas id="confettiCanvas"></canvas>
+<!-- Font Size Controls (hidden but usable) -->
+<div class="controls">
+  <button onclick="changeSize(1)">A+</button>
+  <button onclick="changeSize(-1)">A-</button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
 <script>
 const socket = io();
+let fontScale = 1;
 
 socket.on("LEADERBOARD", data=>{
   const div=document.getElementById("leaderboard");
   div.innerHTML="";
-  data.forEach(p=>{
-    if(!p.name) return;
-    div.innerHTML+=`<div class="entry">${p.name} — ${p.score}</div>`;
+
+  // Remove undefined entries and take top 5 only
+  const clean = data.filter(p=>p.name).slice(0,5);
+
+  clean.forEach((p,index)=>{
+    div.innerHTML+=`
+      <div class="entry">
+        <span class="rank">#${index+1}</span>
+        <span class="name">${p.name}</span>
+        <span class="score">${p.score}</span>
+      </div>
+    `;
   });
 });
 
@@ -65,11 +78,17 @@ function showOverlay(data){
 
 function launchConfetti(){
   confetti({
-    particleCount: 200,
-    spread: 120,
+    particleCount: 250,
+    spread: 130,
     origin: { y: 0.6 }
   });
 }
+
+function changeSize(direction){
+  fontScale += direction * 0.1;
+  document.documentElement.style.setProperty('--scale', fontScale);
+}
 </script>
+
 </body>
 </html>
