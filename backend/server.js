@@ -137,6 +137,7 @@ recalcLeaderboard();
 });
 
 }
+
 /* rebuild picks */
 
 picks = [];
