@@ -5,12 +5,20 @@ color:white;
 font-family:Arial;
 }
 .bottom-images{
-position:fixed;
-bottom:10px;
-width:100%;
-display:flex;
-justify-content:space-between;
-padding:0 40px;
+  position:fixed;
+  bottom:10px;
+  left:0;
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  padding:0 60px;
+  box-sizing:border-box;
 }
-.bottom-images img{height:60px;}
-.bottom-images .center{position:absolute;left:50%;transform:translateX(-50%);}
+.bottom-images img{
+  height:60px;
+}
+
+.bottom-images img:first-child{
+  height:80px;
+}
