@@ -20,114 +20,232 @@ let picks = [];
 let winners = {};
 let leaderboard = [];
 
-function loadCategories() {
-  categories = {};
-  if (!fs.existsSync("backend/data/categories.csv")) return;
-  fs.createReadStream("backend/data/categories.csv")
-    .pipe(csv())
-    .on("data", row => {
-      if (!categories[row.category]) {
-        categories[row.category] = { nominees: [], points: parseInt(row.points || 1) };
-      }
-      categories[row.category].nominees.push(row.nominee);
-    })
-    .on("end", recalcLeaderboard);
+
+/* LOAD CATEGORY CSV */
+
+function loadCategories(){
+
+categories = {};
+
+if(!fs.existsSync("backend/data/categories.csv")) return;
+
+fs.createReadStream("backend/data/categories.csv")
+.pipe(csv())
+.on("data", row => {
+
+if(!categories[row.category]){
+
+categories[row.category] = {
+nominees:[],
+points:parseInt(row.points || 1)
+};
+
 }
 
-function fetchGoogleSheet() {
-  if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes("PASTE")) return;
-  https.get(GOOGLE_SHEET_URL, res => {
-    let data = "";
-    res.on("data", chunk => data += chunk);
-    res.on("end", () => parseGoogleCSV(data));
-  });
+categories[row.category].nominees.push(row.nominee);
+
+})
+.on("end", ()=>{
+recalcLeaderboard();
+});
+
 }
 
-function parseGoogleCSV(csvText) {
-  const rows = [];
-  const lines = csvText.split("\n");
-  const headers = lines[0].split(",");
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i]) continue;
-    const values = lines[i].split(",");
-    const row = {};
-    headers.forEach((h, index) => row[h.trim()] = values[index]?.trim());
-    rows.push(row);
-  }
-  picks = [];
-  rows.forEach(row => {
-    const name = row["Name"];
-    headers.forEach(header => {
-      if (!["Timestamp","Name","Email","Email Address"].includes(header) && row[header]) {
-        picks.push({ name, category: header, nominee: row[header] });
-      }
-    });
-  });
-  recalcLeaderboard();
+
+
+/* FETCH GOOGLE SHEET */
+
+function fetchGoogleSheet(){
+
+if(!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes("PASTE")) return;
+
+https.get(GOOGLE_SHEET_URL,res=>{
+
+let data="";
+
+res.on("data",chunk=>data+=chunk);
+
+res.on("end",()=>parseGoogleCSV(data));
+
+}).on("error",err=>console.log(err));
+
 }
 
-function recalcLeaderboard() {
-  const scores = {};
 
-  // Ensure every participant appears
-  picks.forEach(p => {
-    if (!scores[p.name]) scores[p.name] = 0;
-  });
 
-  // Add points for correct picks
-  picks.forEach(p => {
-    if (winners[p.category] === p.nominee) {
-      scores[p.name] += categories[p.category]?.points || 1;
-    }
-  });
+/* PARSE GOOGLE SHEET */
 
-  leaderboard = Object.entries(scores)
-    .map(([name, score]) => ({ name, score }))
-    .sort((a,b)=>b.score-a.score);
+function parseGoogleCSV(csvText){
 
-  io.emit("LEADERBOARD", leaderboard);
+const rows = [];
+
+const lines = csvText.split("\n");
+
+const headers = lines[0].split(",");
+
+for(let i=1;i<lines.length;i++){
+
+if(!lines[i]) continue;
+
+const values = lines[i].split(",");
+
+const row = {};
+
+headers.forEach((h,index)=>{
+
+row[h.trim()] = values[index]?.trim();
+
+});
+
+rows.push(row);
+
 }
+
+
+
+picks = [];
+
+rows.forEach(row=>{
+
+const name = row["Name"];
+
+headers.forEach(header=>{
+
+if(
+header !== "Timestamp" &&
+header !== "Name" &&
+header !== "Email" &&
+header !== "Email Address"
+){
+
+if(row[header]){
+
+picks.push({
+name:name,
+category:header,
+nominee:row[header]
+});
+
+}
+
+}
+
+});
+
+});
+
+recalcLeaderboard();
+
+}
+
+
+
+/* CALCULATE LEADERBOARD */
+
+function recalcLeaderboard(){
+
+const scores = {};
+
+picks.forEach(p=>{
+
+if(!scores[p.name]) scores[p.name] = 0;
+
+if(winners[p.category] === p.nominee){
+
+scores[p.name] += categories[p.category]?.points || 1;
+
+}
+
+});
+
+leaderboard = Object.entries(scores)
+.map(([name,score])=>({name,score}))
+.sort((a,b)=>b.score-a.score);
+
+io.emit("LEADERBOARD",leaderboard);
+
+}
+
+
+
+/* FIND MOST CHOSEN */
+
+function mostChosen(category){
+
+const counts = {};
+
+picks
+.filter(p=>p.category === category)
+.forEach(p=>{
+
+counts[p.nominee] = (counts[p.nominee] || 0) + 1;
+
+});
+
+let max = 0;
+let winner = null;
+
+for(const n in counts){
+
+if(counts[n] > max){
+
+max = counts[n];
+winner = n;
+
+}
+
+}
+
+return winner;
+
+}
+
+
+
+/* ADMIN SELECT WINNER */
 
 app.post("/winner",(req,res)=>{
-  if(req.headers["x-admin"]!==ADMIN_PASSWORD) return res.sendStatus(403);
 
-  const {category, nominee} = req.body;
-  winners[category]=nominee;
+if(req.headers["x-admin"] !== ADMIN_PASSWORD)
+return res.sendStatus(403);
 
-  // Calculate most chosen nominee
-  const counts = {};
-  picks
-    .filter(p => p.category === category)
-    .forEach(p => {
-      counts[p.nominee] = (counts[p.nominee] || 0) + 1;
-    });
+const {category,nominee} = req.body;
 
-  let mostChosen = null;
-  let max = 0;
-  for (const n in counts) {
-    if (counts[n] > max) {
-      max = counts[n];
-      mostChosen = n;
-    }
-  }
+winners[category] = nominee;
 
-  recalcLeaderboard();
+recalcLeaderboard();
 
-  io.emit("WINNER",{
-    category,
-    winner: nominee,
-    mostChosen
-  });
-
-  res.sendStatus(200);
+io.emit("WINNER",{
+category,
+winner:nominee,
+mostChosen:mostChosen(category)
 });
 
-io.on("connection", socket => {
-  socket.emit("INIT",{categories,leaderboard,winners});
+res.sendStatus(200);
+
 });
+
+
+
+/* SOCKET CONNECTION */
+
+io.on("connection",socket=>{
+
+socket.emit("INIT",{
+categories,
+leaderboard,
+winners
+});
+
+});
+
+
 
 loadCategories();
 fetchGoogleSheet();
+
 setInterval(fetchGoogleSheet,30000);
 
-server.listen(process.env.PORT||3000);
+
+
+server.listen(process.env.PORT || 3000);
