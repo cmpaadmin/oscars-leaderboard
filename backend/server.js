@@ -77,38 +77,66 @@ res.on("end",()=>parseGoogleCSV(data));
 function parseGoogleCSV(csvText){
 
 const rows = [];
-const lines = csvText.split("\n");
 
-if(lines.length < 2) return;
+require("stream")
+.Readable
+.from(csvText)
+.pipe(require("csv-parser")())
+.on("data",(row)=>{
+rows.push(row);
+})
+.on("end",()=>{
 
-const headers = lines[0].split(",").map(h => h.trim());
+if(rows.length === 0){
+console.log("No rows found in sheet");
+return;
+}
 
-/* automatically detect the name column */
+const headers = Object.keys(rows[0]);
 
-/* Google Forms always puts name in column 2 */
-
-let nameColumn = headers[1];
+const nameColumn = headers[1];
 
 console.log("Using name column:", nameColumn);
 
-/* build row objects */
+picks = [];
 
-for(let i=1;i<lines.length;i++){
+rows.forEach(row=>{
 
-if(!lines[i]) continue;
+const name = row[nameColumn];
 
-const values = lines[i].split(",");
+headers.forEach(header=>{
 
-const row = {};
+if(
+header !== headers[0] && // timestamp
+header !== headers[1] && // name
+header !== headers[2]    // email
+){
 
-headers.forEach((h,index)=>{
-row[h] = values[index]?.trim();
+const nominee = row[header];
+
+if(nominee){
+
+picks.push({
+name:name,
+category:header,
+nominee:nominee
 });
-
-rows.push(row);
 
 }
 
+}
+
+});
+
+});
+
+console.log("Picks loaded:", picks.length);
+
+recalcLeaderboard();
+
+});
+
+}
 /* rebuild picks */
 
 picks = [];
