@@ -107,13 +107,19 @@ picks = [];
 
 rows.forEach(row=>{
 
-const name = row["Name"];
+const name =
+  row["Name"] ||
+  row["Your Name"] ||
+  row["What is your name?"] ||
+  row["Full Name"];
 
 headers.forEach(header=>{
 
 if(
 header !== "Timestamp" &&
 header !== "Name" &&
+header !== "Your Name" &&
+header !== "What is your name?" &&
 header !== "Email" &&
 header !== "Email Address"
 ){
