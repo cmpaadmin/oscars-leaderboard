@@ -71,31 +71,20 @@ dots.innerText = ".".repeat(dotCount);
 
 socket.on("LEADERBOARD", data => {
 
-console.log("Leaderboard received:", data);
-
 const div = document.getElementById("leaderboard");
 
 if(!data || data.length === 0) return;
 
-data.sort((a,b)=>b.score-a.score);
-
-const top5 = data.slice(0,5);
-
-/* if everyone still has zero score */
-
-const noWinnersYet = top5.every(p => p.score === 0);
-
-if(noWinnersYet) return;
-
-
 /* remove tabulating message */
 
 const tab = document.getElementById("tabulatingMessage");
-
 if(tab) tab.remove();
 
 div.innerHTML = "";
 
+data.sort((a,b)=>b.score-a.score);
+
+const top5 = data.slice(0,5);
 
 top5.forEach((p,index)=>{
 
