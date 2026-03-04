@@ -28,34 +28,6 @@ body{
   font-weight:bold;
 }
 
-/* Bottom image bar */
-
-.bottom-images{
-  position:fixed;
-  bottom:20px;
-  left:0;
-  width:100%;
-  display:flex;
-  justify-content:space-between;
-  padding:0 80px;
-  box-sizing:border-box;
-  z-index:1;
-}
-
-.bottom-images img{
-  height:70px;
-}
-
-.bottom-images img:first-child{
-  height:120px;
-}
-
-.bottom-images .center{
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-}
-
 /* Winner popup */
 
 .overlay{
