@@ -1,8 +1,8 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-import fs from "fs";
 import https from "https";
+import fs from "fs";
 import csv from "csv-parser";
 import { Readable } from "stream";
 
@@ -22,9 +22,9 @@ let winners = {};
 let leaderboard = [];
 
 
-/* ---------------------------
-   LOAD CATEGORY CSV
-----------------------------*/
+/* -----------------------------
+   LOAD CATEGORY LIST
+------------------------------*/
 
 function loadCategories(){
 
@@ -39,16 +39,19 @@ fs.createReadStream("backend/data/categories.csv")
 .pipe(csv())
 .on("data",(row)=>{
 
-if(!categories[row.category]){
+const category = row.category.trim().toUpperCase();
+const nominee = row.nominee.trim();
 
-categories[row.category.trim().toUpperCase()] = {
+if(!categories[category]){
+
+categories[category] = {
 nominees:[],
 points:parseInt(row.points || 1)
 };
 
 }
 
-categories[row.category.trim().toUpperCase()].nominees.push(row.nominee.trim());
+categories[category].nominees.push(nominee);
 
 })
 .on("end",()=>{
@@ -62,9 +65,9 @@ recalcLeaderboard();
 }
 
 
-/* ---------------------------
+/* -----------------------------
    FETCH GOOGLE SHEET
-----------------------------*/
+------------------------------*/
 
 function fetchGoogleSheet(){
 
@@ -92,16 +95,16 @@ parseGoogleCSV(data);
 
 }).on("error",(err)=>{
 
-console.log("Google fetch failed",err);
+console.log("Google fetch failed:",err);
 
 });
 
 }
 
 
-/* ---------------------------
-   PARSE GOOGLE SHEET CSV
-----------------------------*/
+/* -----------------------------
+   PARSE GOOGLE SHEET
+------------------------------*/
 
 function parseGoogleCSV(csvText){
 
@@ -125,15 +128,15 @@ console.log("Detected headers:",headers);
 
 picks = [];
 
-rows.forEach(row=>{
+rows.forEach((row)=>{
 
 const values = Object.values(row);
 
-const name = values[1];   // column 2 = name
+const name = values[1]; // column 2 = name
 
 if(!name) return;
 
-for(let i=3;i<values.length;i++){   // categories start at column 4
+for(let i=3;i<values.length;i++){
 
 const category = headers[i];
 const nominee = values[i];
@@ -157,64 +160,13 @@ console.log("Picks loaded:",picks.length);
 recalcLeaderboard();
 
 });
-}
-
-/* normalize headers */
-
-const cleanedHeaders = headers.map(h =>
-  h.replace(/\r/g,"")
-   .replace(/\n/g," ")
-   .trim()
-);
-
-const nameColumn = cleanedHeaders[1];  // Google Forms always puts name in column 2
-
-console.log("Using name column:",nameColumn);
-
-picks = [];
-
-rows.forEach((row)=>{
-
-const name = row[nameColumn];
-
-cleanedHeaders.forEach((header)=>{
-
-if(
-header !== headers[0] && // timestamp
-header !== headers[1] && // name
-header !== headers[2]    // email
-){
-
-const nominee = row[header];
-
-if(nominee){
-
-picks.push({
-name:name.trim(),
-category:header.trim().toUpperCase(),
-nominee:nominee.trim()
-});
-
-}
-
-}
-
-});
-
-});
-
-console.log("Picks loaded:",picks.length);
-
-recalcLeaderboard();
-
-});
 
 }
 
 
-/* ---------------------------
+/* -----------------------------
    CALCULATE LEADERBOARD
-----------------------------*/
+------------------------------*/
 
 function recalcLeaderboard(){
 
@@ -241,9 +193,9 @@ io.emit("LEADERBOARD",leaderboard);
 }
 
 
-/* ---------------------------
-   FIND MOST CHOSEN NOMINEE
-----------------------------*/
+/* -----------------------------
+   MOST CHOSEN NOMINEE
+------------------------------*/
 
 function mostChosen(category){
 
@@ -258,25 +210,25 @@ counts[p.nominee] = (counts[p.nominee] || 0) + 1;
 });
 
 let max = 0;
-let winner = null;
+let nominee = null;
 
-for(const nominee in counts){
+for(const n in counts){
 
-if(counts[nominee] > max){
-max = counts[nominee];
-winner = nominee;
+if(counts[n] > max){
+max = counts[n];
+nominee = n;
 }
 
 }
 
-return winner;
+return nominee;
 
 }
 
 
-/* ---------------------------
+/* -----------------------------
    ADMIN SELECT WINNER
-----------------------------*/
+------------------------------*/
 
 app.post("/winner",(req,res)=>{
 
@@ -285,25 +237,29 @@ return res.sendStatus(403);
 }
 
 const {category,nominee} = req.body;
-console.log("Winner received:",category,nominee);
-winners[category] = nominee;
+
+const cat = category.trim().toUpperCase();
+
+console.log("Winner received:",cat,nominee);
+
+winners[cat] = nominee;
 
 recalcLeaderboard();
 
 io.emit("WINNER",{
-category,
+category:cat,
 winner:nominee,
-mostChosen:mostChosen(category)
+mostChosen:mostChosen(cat)
 });
+
 res.sendStatus(200);
 
-
 });
 
 
-/* ---------------------------
+/* -----------------------------
    SOCKET CONNECTION
-----------------------------*/
+------------------------------*/
 
 io.on("connection",(socket)=>{
 
@@ -316,9 +272,9 @@ winners
 });
 
 
-/* ---------------------------
+/* -----------------------------
    START SERVER
-----------------------------*/
+------------------------------*/
 
 loadCategories();
 fetchGoogleSheet();
@@ -328,5 +284,7 @@ setInterval(fetchGoogleSheet,30000);
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT,()=>{
+
 console.log("Server running on port",PORT);
+
 });
