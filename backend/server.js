@@ -249,7 +249,7 @@ return res.sendStatus(403);
 }
 
 const {category,nominee} = req.body;
-
+console.log("Winner received:",category,nominee);
 winners[category] = nominee;
 
 recalcLeaderboard();
@@ -259,8 +259,8 @@ category,
 winner:nominee,
 mostChosen:mostChosen(category)
 });
-
 res.sendStatus(200);
+
 
 });
 
