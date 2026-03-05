@@ -57,7 +57,7 @@ button.onclick = () => {
 
 button.onclick = async () => {
 
-await fetch("/winner",{
+const response = await fetch("/winner",{
   method:"POST",
   headers:{
     "Content-Type":"application/json",
@@ -68,6 +68,9 @@ await fetch("/winner",{
     nominee: select.value
   })
 });
+
+console.log("Winner sent:",category,select.value);
+console.log("Server response:",response.status);
 
 button.innerText = "Winner Selected";
 button.classList.add("winner-chosen");
