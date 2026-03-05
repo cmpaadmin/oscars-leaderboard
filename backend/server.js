@@ -119,9 +119,45 @@ console.log("No rows found in sheet");
 return;
 }
 
-const headers = Object.keys(rows[0])
-.map(h => h.trim())
-.filter(h => h.length > 0);
+const headers = Object.keys(rows[0]);
+
+console.log("Detected headers:",headers);
+
+picks = [];
+
+rows.forEach(row=>{
+
+const values = Object.values(row);
+
+const name = values[1];   // column 2 = name
+
+if(!name) return;
+
+for(let i=3;i<values.length;i++){   // categories start at column 4
+
+const category = headers[i];
+const nominee = values[i];
+
+if(category && nominee){
+
+picks.push({
+name:name.trim(),
+category:category.trim().toUpperCase(),
+nominee:nominee.trim()
+});
+
+}
+
+}
+
+});
+
+console.log("Picks loaded:",picks.length);
+
+recalcLeaderboard();
+
+});
+}
 
 /* normalize headers */
 
