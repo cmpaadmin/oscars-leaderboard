@@ -6,111 +6,18 @@
 <meta charset="UTF-8">
 <title>Oscars Leaderboard</title>
 
-<style>
-
-body{
-background-image:url("/images/background.jpg");
-background-size:cover;
-background-position:center;
-background-repeat:no-repeat;
-background-attachment:fixed;
-
-color:gold;
-font-family:Arial;
-text-align:center;
-overflow:hidden;
-margin:0;
-}
-
-
-/* TABULATING SCREEN */
-
-#tabulatingMessage{
-position:absolute;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-font-size:52px;
-letter-spacing:2px;
-}
-
-
-/* LEADERBOARD */
-
-#leaderboard{
-position:absolute;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-font-size:48px;
-display:flex;
-flex-direction:column;
-align-items:center;
-}
-
-.entry{
-margin:12px;
-opacity:0;
-transform:translateY(40px);
-animation:slideUp .6s ease forwards;
-}
-
-.rank{
-margin-right:20px;
-}
-
-
-@keyframes slideUp{
-
-from{
-opacity:0;
-transform:translateY(40px);
-}
-
-to{
-opacity:1;
-transform:translateY(0);
-}
-
-}
-
-
-/* WINNER POPUP */
-
-#winnerOverlay{
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-z-index:2000;
-display:none;
-}
-
-.overlay-content{
-background:black;
-border:4px solid gold;
-padding:40px;
-border-radius:12px;
-font-size:42px;
-text-align:center;
-box-shadow:0 0 40px gold;
-}
-
-</style>
 <link rel="stylesheet" href="style.css">
+
 </head>
 
 
-
 <body>
-
 
 <div id="tabulatingMessage">
 VOTES ARE BEING TABULATED<span id="dots"></span>
 </div>
 
 <div id="leaderboard"></div>
-
 
 <div id="winnerOverlay">
 <div class="overlay-content">
@@ -129,7 +36,6 @@ Most Chosen: <span id="overlayMost"></span>
 </div>
 
 
-
 <script src="/socket.io/socket.io.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -139,35 +45,32 @@ Most Chosen: <span id="overlayMost"></span>
 
 const socket = io();
 
+let dotCount = 0;
+
 
 /* animated dots */
 
-let dotCount=0;
-
 setInterval(()=>{
 
-const dots=document.getElementById("dots");
+const dots = document.getElementById("dots");
 
-dotCount=(dotCount+1)%4;
+dotCount = (dotCount+1)%4;
 
-dots.innerText=".".repeat(dotCount);
+dots.innerText = ".".repeat(dotCount);
 
 },500);
 
 
 
-/* LEADERBOARD UPDATE */
+/* leaderboard updates */
 
 socket.on("LEADERBOARD",(payload)=>{
-
-/* DO NOTHING UNTIL FIRST WINNER */
 
 if(!payload.started) return;
 
 const data = payload.data;
 
-const tab = document.getElementById("tabulatingMessage");
-if(tab) tab.remove();
+document.getElementById("tabulatingMessage").style.display="none";
 
 const div = document.getElementById("leaderboard");
 
@@ -176,77 +79,7 @@ div.innerHTML="";
 if(!data || data.length===0) return;
 
 
-/* group scores for tie logic */
-
-const grouped={};
-
-data.forEach(player=>{
-
-if(!grouped[player.score]) grouped[player.score]=[];
-
-grouped[player.score].push(player.name);
-
-});
-
-
-const scores = Object.keys(grouped)
-.map(Number)
-.sort((a,b)=>b-a);
-
-
-let rank=1;
-
-scores.forEach(score=>{
-
-const players = grouped[score];
-
-if(rank>5) return;
-
-
-if(players.length>3){
-
-const leaderClass = rank===1 ? "entry leader" : "entry";
-
-div.innerHTML += `
-<div class="${leaderClass}">
-<span class="rank">#${rank}</span>
-<span>${players.length} people tied</span>
-<span> ${score}</span>
-</div>
-`;
-
-rank++;
-
-}else{
-
-players.forEach(name=>{
-
-if(rank<=5){
-
-const leaderClass = rank===1 ? "entry leader" : "entry";
-
-div.innerHTML += `
-<div class="${leaderClass}">
-<span class="rank">#${rank}</span>
-<span>${name}</span>
-<span> ${score}</span>
-</div>
-`;
-
-rank++;
-
-}
-
-});
-
-}
-
-});
-
-});
-
-
-/* GROUP PLAYERS BY SCORE */
+/* group ties */
 
 const grouped = {};
 
@@ -266,7 +99,6 @@ const scores = Object.keys(grouped)
 
 let rank = 1;
 
-
 scores.forEach(score=>{
 
 const players = grouped[score];
@@ -274,12 +106,14 @@ const players = grouped[score];
 if(rank>5) return;
 
 
-/* MANY TIED */
+/* many tied */
 
 if(players.length>3){
 
+const leaderClass = rank===1 ? "entry leader" : "entry";
+
 div.innerHTML += `
-<div class="entry">
+<div class="${leaderClass}">
 <span class="rank">#${rank}</span>
 <span>${players.length} people tied</span>
 <span> ${score}</span>
@@ -290,8 +124,7 @@ rank++;
 
 }
 
-
-/* FEW TIED */
+/* few tied */
 
 else{
 
@@ -299,8 +132,10 @@ players.forEach(name=>{
 
 if(rank<=5){
 
+const leaderClass = rank===1 ? "entry leader" : "entry";
+
 div.innerHTML += `
-<div class="entry">
+<div class="${leaderClass}">
 <span class="rank">#${rank}</span>
 <span>${name}</span>
 <span> ${score}</span>
@@ -321,7 +156,7 @@ rank++;
 
 
 
-/* WINNER EVENT */
+/* winner popup */
 
 socket.on("WINNER",(data)=>{
 
@@ -332,7 +167,8 @@ launchConfetti();
 });
 
 
-/* RESET */
+
+/* reset event */
 
 socket.on("RESET",()=>{
 
@@ -342,21 +178,17 @@ location.reload();
 
 
 
-/* WINNER POPUP */
+/* popup */
 
 function showOverlay(data){
 
 const overlay = document.getElementById("winnerOverlay");
 
 document.getElementById("overlayCategory").innerText = data.category;
-
 document.getElementById("overlayWinner").innerText = data.winner;
-
 document.getElementById("overlayMost").innerText = data.mostChosen || "N/A";
 
-
 overlay.style.display="block";
-
 
 setTimeout(()=>{
 
@@ -368,11 +200,12 @@ overlay.style.display="none";
 
 
 
-/* CONFETTI */
+/* continuous confetti */
 
 function launchConfetti(){
 
 const duration = 10000;
+
 const end = Date.now() + duration;
 
 (function frame(){
