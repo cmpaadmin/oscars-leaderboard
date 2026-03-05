@@ -300,12 +300,32 @@ overlay.style.display="none";
 
 function launchConfetti(){
 
+const duration = 10000;
+const end = Date.now() + duration;
+
+(function frame(){
+
 confetti({
-particleCount:300,
-spread:140,
-origin:{y:0.6},
+particleCount:6,
+angle:60,
+spread:70,
+origin:{x:0},
 zIndex:9999
 });
+
+confetti({
+particleCount:6,
+angle:120,
+spread:70,
+origin:{x:1},
+zIndex:9999
+});
+
+if(Date.now() < end){
+requestAnimationFrame(frame);
+}
+
+})();
 
 }
 
