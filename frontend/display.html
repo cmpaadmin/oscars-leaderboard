@@ -6,83 +6,113 @@
 <meta charset="UTF-8">
 <title>Oscars Leaderboard</title>
 
-<link rel="stylesheet" href="style.css">
+<style>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+body{
+background:black;
+color:gold;
+font-family:Arial;
+text-align:center;
+overflow:hidden;
+}
+
+#leaderboard{
+margin-top:120px;
+font-size:48px;
+}
+
+.entry{
+margin:10px;
+}
+
+.rank{
+margin-right:20px;
+}
+
+#tabulatingMessage{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:50px;
+}
+
+#winnerOverlay{
+position:fixed;
+top:40%;
+left:50%;
+transform:translate(-50%,-50%);
+z-index:1000;
+display:none;
+}
+
+.overlay-content{
+background:black;
+border:4px solid gold;
+padding:40px;
+border-radius:10px;
+font-size:40px;
+box-shadow:0 0 30px gold;
+}
+
+</style>
 
 </head>
 
-
 <body>
 
-<div id="leaderboard">
-
-<div id="tabulatingMessage" class="tabulating">
+<div id="tabulatingMessage">
 VOTES ARE BEING TABULATED<span id="dots"></span>
 </div>
 
-</div>
+<div id="leaderboard"></div>
 
-
-
-<!-- Winner popup -->
-
-<div id="winnerOverlay" class="overlay hidden">
-
+<div id="winnerOverlay">
 <div class="overlay-content">
-
-<h2 id="overlayCategory"></h2>
-
-<p>Winner: <span id="overlayWinner"></span></p>
-
-<p>Most Chosen: <span id="overlayMost"></span></p>
-
+<div id="overlayCategory"></div>
+<div>Winner: <span id="overlayWinner"></span></div>
+<div>Most Chosen: <span id="overlayMost"></span></div>
+</div>
 </div>
 
-</div>
-
-
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 <script>
 
 const socket = io();
 
-let dotCount = 0;
-
+let dotCount=0;
 
 /* animated dots */
 
 setInterval(()=>{
 
-const dots = document.getElementById("dots");
+const dots=document.getElementById("dots");
 
-if(!dots) return;
+dotCount=(dotCount+1)%4;
 
-dotCount = (dotCount + 1) % 4;
-
-dots.innerText = ".".repeat(dotCount);
+dots.innerText=".".repeat(dotCount);
 
 },500);
 
 
 
-/* leaderboard update */
-
-socket.on("LEADERBOARD", payload => {
+socket.on("LEADERBOARD",(payload)=>{
 
 if(!payload.started) return;
 
 const data = payload.data;
 
 const tab = document.getElementById("tabulatingMessage");
+
 if(tab) tab.remove();
 
 const div = document.getElementById("leaderboard");
 
-div.innerHTML = "";
+div.innerHTML="";
 
-if(!data || data.length === 0) return;
+if(!data || data.length===0) return;
 
 data.sort((a,b)=>b.score-a.score);
 
@@ -93,8 +123,8 @@ top5.forEach((p,index)=>{
 div.innerHTML += `
 <div class="entry">
 <span class="rank">#${index+1}</span>
-<span class="name">${p.name}</span>
-<span class="score">${p.score}</span>
+<span>${p.name}</span>
+<span> ${p.score}</span>
 </div>
 `;
 
@@ -104,17 +134,19 @@ div.innerHTML += `
 
 
 
-/* winner popup */
-
-socket.on("WINNER", data=>{
-
-const tab = document.getElementById("tabulatingMessage");
-
-if(tab) tab.remove();
+socket.on("WINNER",(data)=>{
 
 showOverlay(data);
 
 launchConfetti();
+
+});
+
+
+
+socket.on("RESET",()=>{
+
+location.reload();
 
 });
 
@@ -128,18 +160,11 @@ document.getElementById("overlayCategory").innerText = data.category;
 document.getElementById("overlayWinner").innerText = data.winner;
 document.getElementById("overlayMost").innerText = data.mostChosen || "N/A";
 
-overlay.classList.remove("hidden");
-overlay.classList.add("fade-in");
+overlay.style.display="block";
 
 setTimeout(()=>{
 
-overlay.classList.remove("fade-in");
-overlay.classList.add("fade-out");
-
-setTimeout(()=>{
-overlay.classList.add("hidden");
-overlay.classList.remove("fade-out");
-},1000);
+overlay.style.display="none";
 
 },10000);
 
@@ -159,7 +184,6 @@ zIndex:9999
 }
 
 </script>
-
 
 </body>
 </html>
