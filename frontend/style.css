@@ -11,7 +11,7 @@ background-repeat:no-repeat;
 background-attachment:fixed;
 
 font-family:Arial, Helvetica, sans-serif;
-color:gold;
+color:white;
 text-align:center;
 overflow:hidden;
 margin:0;
@@ -31,22 +31,15 @@ top:50%;
 left:50%;
 transform:translate(-50%,-50%);
 
-font-size:52px;
+font-size:54px;
 letter-spacing:2px;
 
-background:linear-gradient(
-180deg,
-#fff3b0 0%,
-#ffd700 40%,
-#b8860b 100%
-);
-
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
+color:#ffd700;
 
 text-shadow:
-0 0 10px rgba(255,215,0,.6),
-0 0 20px rgba(255,215,0,.4);
+0 0 12px rgba(255,215,0,0.9),
+0 0 24px rgba(255,215,0,0.7),
+0 0 40px rgba(255,215,0,0.5);
 
 }
 
@@ -63,7 +56,7 @@ top:50%;
 left:50%;
 transform:translate(-50%,-50%);
 
-font-size:48px;
+font-size:50px;
 
 display:flex;
 flex-direction:column;
@@ -77,33 +70,23 @@ align-items:center;
 
 .entry{
 
-margin:12px;
+margin:14px;
 
 opacity:0;
 transform:translateY(40px);
 animation:slideUp .6s ease forwards;
 
-/* OSCARS GOLD TEXT */
+/* RICH OSCARS GOLD */
 
-background:linear-gradient(
-180deg,
-#fff3b0 0%,
-#ffd700 35%,
-#e6b800 60%,
-#b8860b 100%
-);
-
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
+color:#d4af37;
 
 font-weight:bold;
 letter-spacing:1px;
 
-/* subtle glow */
-
 text-shadow:
-0 0 8px rgba(255,215,0,.6),
-0 0 16px rgba(255,215,0,.4);
+0 0 6px rgba(255,215,0,0.8),
+0 0 12px rgba(255,215,0,0.6),
+0 0 22px rgba(255,215,0,0.5);
 
 }
 
@@ -115,15 +98,11 @@ text-shadow:
 
 margin-right:20px;
 
-background:linear-gradient(
-180deg,
-#fff3b0,
-#ffd700,
-#b8860b
-);
+color:#ffd700;
 
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
+text-shadow:
+0 0 6px rgba(255,215,0,0.8),
+0 0 12px rgba(255,215,0,0.6);
 
 font-weight:bold;
 
@@ -138,7 +117,7 @@ font-weight:bold;
 .leader{
 
 animation:leaderGlow 1.2s ease;
-transform:scale(1.08);
+transform:scale(1.1);
 
 }
 
@@ -155,21 +134,23 @@ text-shadow:none;
 
 50%{
 
-transform:scale(1.12);
+transform:scale(1.18);
 
 text-shadow:
 0 0 10px gold,
 0 0 20px gold,
-0 0 40px gold;
+0 0 40px gold,
+0 0 60px gold;
 
 }
 
 100%{
 
-transform:scale(1.08);
+transform:scale(1.1);
 
 text-shadow:
-0 0 6px gold;
+0 0 12px rgba(255,215,0,0.8),
+0 0 22px rgba(255,215,0,0.6);
 
 }
 
@@ -223,47 +204,42 @@ display:none;
 
 .overlay-content{
 
-background:black;
+background:rgba(0,0,0,.85);
 
-border:4px solid gold;
+border:4px solid #d4af37;
 
-padding:40px;
+padding:45px;
 
-border-radius:12px;
+border-radius:14px;
 
-font-size:42px;
+font-size:44px;
 
 text-align:center;
 
 box-shadow:
-0 0 30px gold,
-0 0 60px rgba(255,215,0,.6);
+0 0 20px rgba(255,215,0,0.8),
+0 0 40px rgba(255,215,0,0.6),
+0 0 60px rgba(255,215,0,0.4);
 
-background:rgba(0,0,0,.85);
-
-color:gold;
+color:#ffd700;
 
 }
 
 
 
 /* ------------------------------------------------ */
-/* OPTIONAL: WINNER TEXT GOLD */
+/* WINNER TEXT */
 /* ------------------------------------------------ */
 
 #overlayWinner,
 #overlayMost{
 
-background:linear-gradient(
-180deg,
-#fff3b0,
-#ffd700,
-#b8860b
-);
-
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
+color:#ffd700;
 
 font-weight:bold;
+
+text-shadow:
+0 0 10px rgba(255,215,0,0.9),
+0 0 20px rgba(255,215,0,0.7);
 
 }
