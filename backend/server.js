@@ -276,6 +276,24 @@ res.sendStatus(200);
 
 });
 
+app.post("/reset",(req,res)=>{
+
+if(req.headers["x-admin"] !== ADMIN_PASSWORD){
+return res.sendStatus(403);
+}
+
+console.log("Scores reset");
+
+winners = {};
+leaderboard = [];
+
+io.emit("RESET");
+
+recalcLeaderboard();
+
+res.sendStatus(200);
+
+});
 
 /* -----------------------------
    SOCKET CONNECTION
