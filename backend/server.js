@@ -71,6 +71,10 @@ recalcLeaderboard();
 
 function fetchGoogleSheet(){
 
+if(data.startsWith("<")){
+console.log("Google returned HTML instead of CSV");
+return;
+}
 if(!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes("PASTE")){
 console.log("Google Sheet URL not configured");
 return;
