@@ -41,14 +41,14 @@ fs.createReadStream("backend/data/categories.csv")
 
 if(!categories[row.category]){
 
-categories[row.category] = {
+categories[row.category.trim().toUpperCase()] = {
 nominees:[],
 points:parseInt(row.points || 1)
 };
 
 }
 
-categories[row.category].nominees.push(row.nominee);
+categories[row.category.trim().toUpperCase()].nominees.push(row.nominee.trim());
 
 })
 .on("end",()=>{
@@ -154,9 +154,9 @@ const nominee = row[header];
 if(nominee){
 
 picks.push({
-name:name,
-category:header,
-nominee:nominee
+name:name.trim(),
+category:header.trim().toUpperCase(),
+nominee:nominee.trim()
 });
 
 }
