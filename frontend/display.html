@@ -69,7 +69,14 @@ dots.innerText = ".".repeat(dotCount);
 
 /* leaderboard update */
 
-socket.on("LEADERBOARD", data => {
+socket.on("LEADERBOARD", payload => {
+
+if(!payload.started) return;
+
+const data = payload.data;
+
+const tab = document.getElementById("tabulatingMessage");
+if(tab) tab.remove();
 
 const div = document.getElementById("leaderboard");
 
