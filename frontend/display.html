@@ -80,23 +80,15 @@ if(tab) tab.remove();
 
 const div = document.getElementById("leaderboard");
 
-if(!data || data.length === 0) return;
-
-/* remove tabulating message */
-
-const tab = document.getElementById("tabulatingMessage");
-if(tab) tab.remove();
-
 div.innerHTML = "";
+
+if(!data || data.length === 0) return;
 
 data.sort((a,b)=>b.score-a.score);
 
 const top5 = data.slice(0,5);
 
 top5.forEach((p,index)=>{
-const tab = document.getElementById("tabulatingMessage");
-if(tab) tab.remove();
-if(!p.name) return;
 
 div.innerHTML += `
 <div class="entry">
