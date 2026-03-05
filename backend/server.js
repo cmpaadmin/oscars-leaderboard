@@ -23,6 +23,7 @@ let categories = {};
 let picks = [];
 let winners = {};
 let leaderboard = [];
+let firstWinnerSelected = false;
 
 
 /* -----------------------------
@@ -202,7 +203,10 @@ leaderboard = Object.entries(scores)
 .map(([name,score])=>({name,score}))
 .sort((a,b)=>b.score-a.score);
 
-io.emit("LEADERBOARD",leaderboard);
+io.emit("LEADERBOARD",{
+data: leaderboard,
+started: firstWinnerSelected
+});
 
 }
 
@@ -257,7 +261,7 @@ const cat = category.trim().toUpperCase();
 console.log("Winner selected:",cat,nominee);
 
 winners[cat] = nominee;
-
+firstWinnerSelected = true;
 recalcLeaderboard();
 
 io.emit("WINNER",{
