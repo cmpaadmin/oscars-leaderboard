@@ -41,20 +41,24 @@ Most Chosen: <span id="overlayMost"></span>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
 <script>
 
 const socket = io();
 
 let dotCount = 0;
 
+/* TABULATING DOTS */
 
-/* animated dots */
-
-setInterval(()=>{
+setInterval(() => {
 
 const dots = document.getElementById("dots");
 
-dotCount = (dotCount+1)%4;
+if(!dots) return;
+
+dotCount = (dotCount + 1) % 4;
 
 dots.innerText = ".".repeat(dotCount);
 
@@ -62,16 +66,16 @@ dots.innerText = ".".repeat(dotCount);
 
 
 
-/* leaderboard updates */
+/* LEADERBOARD UPDATE */
 
 socket.on("LEADERBOARD",(payload)=>{
 
 const data = payload.data;
 
-if(!data || data.length===0) return;
+if(!data || data.length === 0) return;
 
 
-/* DO NOT SHOW LEADERBOARD UNTIL SOMEONE HAS POINTS */
+/* do not show leaderboard until someone has points */
 
 const maxScore = Math.max(...data.map(p => p.score));
 
@@ -81,97 +85,22 @@ if(maxScore === 0) return;
 /* hide tabulating screen */
 
 const tab = document.getElementById("tabulatingMessage");
-if(tab) tab.style.display="none";
+
+if(tab) tab.style.display = "none";
 
 
 const div = document.getElementById("leaderboard");
-div.innerHTML="";
 
-
-/* GROUP TIES */
-
-const grouped={};
-
-data.forEach(player=>{
-
-if(!grouped[player.score]) grouped[player.score]=[];
-
-grouped[player.score].push(player.name);
-
-});
-
-
-const scores = Object.keys(grouped)
-.map(Number)
-.sort((a,b)=>b-a);
-
-
-let rank=1;
-
-scores.forEach(score=>{
-
-const players = grouped[score];
-
-if(rank>5) return;
-
-
-/* MANY TIED */
-
-if(players.length>3){
-
-const leaderClass = rank===1 ? "entry leader" : "entry";
-
-div.innerHTML += `
-<div class="${leaderClass}">
-<span class="rank">#${rank}</span>
-<span>${players.length} people tied</span>
-<span> ${score}</span>
-</div>
-`;
-
-rank++;
-
-}
-
-
-/* FEW TIED */
-
-else{
-
-players.forEach(name=>{
-
-if(rank<=5){
-
-const leaderClass = rank===1 ? "entry leader" : "entry";
-
-div.innerHTML += `
-<div class="${leaderClass}">
-<span class="rank">#${rank}</span>
-<span>${name}</span>
-<span> ${score}</span>
-</div>
-`;
-
-rank++;
-
-}
-
-});
-
-}
-
-});
-
-});
+div.innerHTML = "";
 
 
 /* group ties */
 
 const grouped = {};
 
-data.forEach(player=>{
+data.forEach(player => {
 
-if(!grouped[player.score]) grouped[player.score]=[];
+if(!grouped[player.score]) grouped[player.score] = [];
 
 grouped[player.score].push(player.name);
 
@@ -185,18 +114,18 @@ const scores = Object.keys(grouped)
 
 let rank = 1;
 
-scores.forEach(score=>{
+scores.forEach(score => {
 
 const players = grouped[score];
 
-if(rank>5) return;
+if(rank > 5) return;
 
 
 /* many tied */
 
-if(players.length>3){
+if(players.length > 3){
 
-const leaderClass = rank===1 ? "entry leader" : "entry";
+const leaderClass = rank === 1 ? "entry leader" : "entry";
 
 div.innerHTML += `
 <div class="${leaderClass}">
@@ -210,15 +139,16 @@ rank++;
 
 }
 
+
 /* few tied */
 
 else{
 
-players.forEach(name=>{
+players.forEach(name => {
 
-if(rank<=5){
+if(rank <= 5){
 
-const leaderClass = rank===1 ? "entry leader" : "entry";
+const leaderClass = rank === 1 ? "entry leader" : "entry";
 
 div.innerHTML += `
 <div class="${leaderClass}">
@@ -242,7 +172,7 @@ rank++;
 
 
 
-/* winner popup */
+/* WINNER POPUP */
 
 socket.on("WINNER",(data)=>{
 
@@ -254,7 +184,7 @@ launchConfetti();
 
 
 
-/* reset event */
+/* RESET */
 
 socket.on("RESET",()=>{
 
@@ -264,21 +194,23 @@ location.reload();
 
 
 
-/* popup */
+/* POPUP */
 
 function showOverlay(data){
 
 const overlay = document.getElementById("winnerOverlay");
 
 document.getElementById("overlayCategory").innerText = data.category;
+
 document.getElementById("overlayWinner").innerText = data.winner;
+
 document.getElementById("overlayMost").innerText = data.mostChosen || "N/A";
 
-overlay.style.display="block";
+overlay.style.display = "block";
 
 setTimeout(()=>{
 
-overlay.style.display="none";
+overlay.style.display = "none";
 
 },10000);
 
@@ -286,7 +218,7 @@ overlay.style.display="none";
 
 
 
-/* continuous confetti */
+/* CONTINUOUS CONFETTI */
 
 function launchConfetti(){
 
