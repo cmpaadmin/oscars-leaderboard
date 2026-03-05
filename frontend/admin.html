@@ -1,116 +1,148 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <meta charset="UTF-8">
-<title>Admin Control</title>
-<link rel="stylesheet" href="style.css">
-<script src="/socket.io/socket.io.js"></script>
+<title>Oscars Admin Panel</title>
+
+<style>
+
+body{
+background:black;
+color:gold;
+font-family:Arial;
+text-align:center;
+}
+
+h1{
+margin-top:30px;
+}
+
+#categories{
+margin-top:40px;
+width:80%;
+margin-left:auto;
+margin-right:auto;
+}
+
+.row{
+display:flex;
+justify-content:center;
+align-items:center;
+margin-bottom:15px;
+gap:10px;
+}
+
+.row select{
+padding:8px;
+font-size:16px;
+}
+
+.row button{
+padding:8px 14px;
+font-size:16px;
+cursor:pointer;
+}
+
+.completed{
+background:gold;
+color:black;
+padding:6px;
+border-radius:6px;
+}
+
+</style>
+
 </head>
 
-<body class="admin-body">
 
-<div class="admin-container">
-  <h1 class="admin-title">Admin Control Panel</h1>
-  <div id="categories"></div>
-</div>
+<body>
+
+<h1>Admin Control Panel</h1>
+
+<div id="categories"></div>
+
+
+<script src="/socket.io/socket.io.js"></script>
 
 <script>
 
 const socket = io();
-let categoriesData = {};
 
-socket.on("INIT", data => {
-  categoriesData = data.categories;
-  buildCategories();
+const ADMIN_PASSWORD = "f1!msk00lF$U";
+
+socket.on("INIT",(data)=>{
+
+const categories = data.categories;
+
+const container = document.getElementById("categories");
+
+container.innerHTML="";
+
+Object.keys(categories).forEach(category=>{
+
+const row = document.createElement("div");
+row.className="row";
+
+const label = document.createElement("span");
+label.innerText = category;
+
+const select = document.createElement("select");
+
+categories[category].nominees.forEach(nominee=>{
+
+const option = document.createElement("option");
+option.value = nominee;
+option.innerText = nominee;
+
+select.appendChild(option);
+
 });
 
-function buildCategories(){
-
-  const container = document.getElementById("categories");
-  container.innerHTML = "";
-
-  Object.keys(categoriesData).forEach(category => {
-
-    const row = document.createElement("div");
-    row.className = "category-row";
-
-    const label = document.createElement("div");
-    label.className = "category-label";
-    label.innerText = category;
-
-    const select = document.createElement("select");
-    select.className = "winner-select";
-
-    categoriesData[category].nominees.forEach(nominee=>{
-      const option = document.createElement("option");
-      option.value = nominee;
-      option.textContent = nominee;
-      select.appendChild(option);
-    });
-
-   const button = document.createElement("button");
-button.className = "winner-button";
+const button = document.createElement("button");
 button.innerText = "Set Winner";
-button.dataset.category = category;
 
-button.onclick = async () => {
+
+button.onclick = async function(){
 
 console.log("Button clicked");
 
 const response = await fetch("/winner",{
-  method:"POST",
-  headers:{
-    "Content-Type":"application/json",
-    "x-admin":"oscars2025"
-  },
-  body:JSON.stringify({
-    category: category,
-    nominee: select.value
-  })
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"x-admin":ADMIN_PASSWORD
+},
+body:JSON.stringify({
+category:category,
+nominee:select.value
+})
 });
 
 console.log("Winner sent:",category,select.value);
 console.log("Server response:",response.status);
 
-};
-
-const response = await fetch("https://oscars-leaderboard-1.onrender.com/winner",{
-  method:"POST",
-  headers:{
-    "Content-Type":"application/json",
-    "x-admin":"f1!msk00lF$U"
-  },
-  body:JSON.stringify({
-    category: category,
-    nominee: select.value
-  })
-});
-
-console.log("Winner sent:",category,select.value);
-console.log("Server response:",response.status);
+if(response.status === 200){
 
 button.innerText = "Winner Selected";
-button.classList.add("winner-chosen");
-row.classList.add("category-complete");
 
-};
-
-  button.innerText = "Winner Selected";
-  button.classList.add("winner-chosen");
-
-  row.classList.add("category-complete");
-
-};
-
-    row.appendChild(label);
-    row.appendChild(select);
-    row.appendChild(button);
-
-    container.appendChild(row);
-
-  });
+row.classList.add("completed");
 
 }
+
+};
+
+
+row.appendChild(label);
+row.appendChild(select);
+row.appendChild(button);
+
+container.appendChild(row);
+
+});
+
+});
 
 </script>
 
