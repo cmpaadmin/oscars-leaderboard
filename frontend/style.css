@@ -4,14 +4,13 @@
 
 body{
 
-background-image:url("/images/background.jpg");
+background-image:url("/images/background.png");
 background-size:cover;
 background-position:center;
 background-repeat:no-repeat;
 background-attachment:fixed;
 
 font-family:Arial, Helvetica, sans-serif;
-color:white;
 text-align:center;
 overflow:hidden;
 margin:0;
@@ -34,12 +33,12 @@ transform:translate(-50%,-50%);
 font-size:54px;
 letter-spacing:2px;
 
-color:#ffd700;
+color:#d4af37;
 
 text-shadow:
-0 0 12px rgba(255,215,0,0.9),
-0 0 24px rgba(255,215,0,0.7),
-0 0 40px rgba(255,215,0,0.5);
+0 0 8px rgba(255,215,0,0.8),
+0 0 16px rgba(255,215,0,0.6),
+0 0 30px rgba(255,215,0,0.4);
 
 }
 
@@ -72,11 +71,9 @@ align-items:center;
 
 margin:14px;
 
-opacity:0;
-transform:translateY(40px);
-animation:slideUp .6s ease forwards;
+/* visible by default (prevents missing #1 bug) */
 
-/* RICH OSCARS GOLD */
+opacity:1;
 
 color:#d4af37;
 
@@ -87,6 +84,8 @@ text-shadow:
 0 0 6px rgba(255,215,0,0.8),
 0 0 12px rgba(255,215,0,0.6),
 0 0 22px rgba(255,215,0,0.5);
+
+animation:slideUp .6s ease;
 
 }
 
@@ -100,11 +99,35 @@ margin-right:20px;
 
 color:#ffd700;
 
+font-weight:bold;
+
 text-shadow:
 0 0 6px rgba(255,215,0,0.8),
 0 0 12px rgba(255,215,0,0.6);
 
-font-weight:bold;
+}
+
+
+
+/* ------------------------------------------------ */
+/* ENTRY ANIMATION */
+/* ------------------------------------------------ */
+
+@keyframes slideUp{
+
+from{
+
+transform:translateY(25px);
+opacity:0.2;
+
+}
+
+to{
+
+transform:translateY(0);
+opacity:1;
+
+}
 
 }
 
@@ -151,30 +174,6 @@ transform:scale(1.1);
 text-shadow:
 0 0 12px rgba(255,215,0,0.8),
 0 0 22px rgba(255,215,0,0.6);
-
-}
-
-}
-
-
-
-/* ------------------------------------------------ */
-/* ENTRY ANIMATION */
-/* ------------------------------------------------ */
-
-@keyframes slideUp{
-
-from{
-
-opacity:0;
-transform:translateY(40px);
-
-}
-
-to{
-
-opacity:1;
-transform:translateY(0);
 
 }
 
