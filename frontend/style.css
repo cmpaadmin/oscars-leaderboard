@@ -1,166 +1,269 @@
-:root{
-  --gold:#D4AF37;
-  --scale:1;
-}
+/* ------------------------------------------------ */
+/* GLOBAL PAGE STYLE */
+/* ------------------------------------------------ */
 
 body{
-  margin:0;
-  background:url("images/background.jpg") center/cover no-repeat fixed;
-  color:var(--gold);
-  font-family:Georgia, serif;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  overflow:auto;
-  position:relative;
+
+background-image:url("/images/background.png");
+background-size:cover;
+background-position:center;
+background-repeat:no-repeat;
+background-attachment:fixed;
+
+font-family:Arial, Helvetica, sans-serif;
+color:gold;
+text-align:center;
+overflow:hidden;
+margin:0;
+
 }
 
-#leaderboard{
+
+
+/* ------------------------------------------------ */
+/* TABULATING SCREEN */
+/* ------------------------------------------------ */
+
+#tabulatingMessage{
+
 position:absolute;
 top:50%;
 left:50%;
 transform:translate(-50%,-50%);
-font-size:48px;
-display:flex;
-flex-direction:column;
-align-items:center;
+
+font-size:52px;
+letter-spacing:2px;
+
+background:linear-gradient(
+180deg,
+#fff3b0 0%,
+#ffd700 40%,
+#b8860b 100%
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+text-shadow:
+0 0 10px rgba(255,215,0,.6),
+0 0 20px rgba(255,215,0,.4);
+
 }
 
-.entry{
-  margin:20px 0;
-  font-size:calc(3rem * var(--scale));
-  font-weight:bold;
-}
 
-/* Winner popup */
 
-#winnerOverlay{
-position:fixed;
+/* ------------------------------------------------ */
+/* LEADERBOARD */
+/* ------------------------------------------------ */
+
+#leaderboard{
+
+position:absolute;
 top:50%;
 left:50%;
 transform:translate(-50%,-50%);
-z-index:2000;
-display:none;
+
+font-size:48px;
+
+display:flex;
+flex-direction:column;
+align-items:center;
+
 }
+
+
+
+/* leaderboard row */
+
+.entry{
+
+margin:12px;
+
+opacity:0;
+transform:translateY(40px);
+animation:slideUp .6s ease forwards;
+
+/* OSCARS GOLD TEXT */
+
+background:linear-gradient(
+180deg,
+#fff3b0 0%,
+#ffd700 35%,
+#e6b800 60%,
+#b8860b 100%
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+font-weight:bold;
+letter-spacing:1px;
+
+/* subtle glow */
+
+text-shadow:
+0 0 8px rgba(255,215,0,.6),
+0 0 16px rgba(255,215,0,.4);
+
+}
+
+
+
+/* rank number */
+
+.rank{
+
+margin-right:20px;
+
+background:linear-gradient(
+180deg,
+#fff3b0,
+#ffd700,
+#b8860b
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+font-weight:bold;
+
+}
+
+
+
+/* ------------------------------------------------ */
+/* LEADER ANIMATION (#1 PLACE) */
+/* ------------------------------------------------ */
+
+.leader{
+
+animation:leaderGlow 1.2s ease;
+transform:scale(1.08);
+
+}
+
+
+
+@keyframes leaderGlow{
+
+0%{
+
+transform:scale(1);
+text-shadow:none;
+
+}
+
+50%{
+
+transform:scale(1.12);
+
+text-shadow:
+0 0 10px gold,
+0 0 20px gold,
+0 0 40px gold;
+
+}
+
+100%{
+
+transform:scale(1.08);
+
+text-shadow:
+0 0 6px gold;
+
+}
+
+}
+
+
+
+/* ------------------------------------------------ */
+/* ENTRY ANIMATION */
+/* ------------------------------------------------ */
+
+@keyframes slideUp{
+
+from{
+
+opacity:0;
+transform:translateY(40px);
+
+}
+
+to{
+
+opacity:1;
+transform:translateY(0);
+
+}
+
+}
+
+
+
+/* ------------------------------------------------ */
+/* WINNER POPUP */
+/* ------------------------------------------------ */
+
+#winnerOverlay{
+
+position:fixed;
+
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+
+z-index:2000;
+
+display:none;
+
+}
+
+
 
 .overlay-content{
+
 background:black;
+
 border:4px solid gold;
+
 padding:40px;
+
 border-radius:12px;
-font-size:44px;
+
+font-size:42px;
+
 text-align:center;
-box-shadow:0 0 30px gold;
+
+box-shadow:
+0 0 30px gold,
+0 0 60px rgba(255,215,0,.6);
+
+background:rgba(0,0,0,.85);
+
+color:gold;
+
 }
 
-.hidden{
-  display:none;
-}
 
-.fade-in{
-  display:flex;
-  opacity:1;
-}
 
-.fade-out{
-  opacity:0;
-}
+/* ------------------------------------------------ */
+/* OPTIONAL: WINNER TEXT GOLD */
+/* ------------------------------------------------ */
 
-/* Text size controls */
+#overlayWinner,
+#overlayMost{
 
-.controls{
-  position:fixed;
-  bottom:20px;
-  left:20px;
-}
+background:linear-gradient(
+180deg,
+#fff3b0,
+#ffd700,
+#b8860b
+);
 
-.controls button{
-  font-size:18px;
-  padding:8px;
-}
-/* ADMIN PAGE */
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
 
-.admin-body{
-  background:black;
-  color:#D4AF37;
-  font-family:Georgia, serif;
-}
+font-weight:bold;
 
-.admin-container{
-  width:800px;
-  margin:auto;
-  margin-top:80px;
-  text-align:left;
-}
-
-.admin-title{
-  margin-bottom:40px;
-}
-
-.category-row{
-  display:flex;
-  justify-content:left;
-  align-items:left;
-  gap:20px;
-  margin-bottom:15px;
-  padding: 10px;
-}
-
-.category-label{
-  width:250px;
-  text-align:right;
-}
-
-.winner-select{
-  padding:6px;
-  font-size:16px;
-}
-
-.winner-button{
-  background:#D4AF37;
-  border:none;
-  padding:8px 14px;
-  font-weight:bold;
-  cursor:pointer;
-}
-/* Tabulation message */
-
-.tabulating{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%);
-  font-size:calc(5rem * var(--scale));
-  text-align:center;
-  letter-spacing:6px;
-  font-weight:bold;
-  color:#D4AF37;
-  animation: glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes glow{
-  from{
-    text-shadow:
-      0 0 10px rgba(212,175,55,0.5),
-      0 0 20px rgba(212,175,55,0.3);
-  }
-
-  to{
-    text-shadow:
-      0 0 20px rgba(212,175,55,0.9),
-      0 0 40px rgba(212,175,55,0.6);
-  }
-}
-.winner-chosen{
-  background:#28a745;
-  color:white;
-}
-/* Completed category highlight */
-
-.category-complete{
-  background:rgba(212,175,55,0.2);
-  border-left:6px solid #D4AF37;
-  padding:6px;
-  border-radius:4px;
 }
