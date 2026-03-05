@@ -4,7 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Oscars Admin Panel</title>
+<title>Oscars Admin</title>
 
 <style>
 
@@ -17,6 +17,13 @@ text-align:center;
 
 h1{
 margin-top:30px;
+}
+
+#resetButton{
+margin-top:10px;
+padding:8px 16px;
+font-size:16px;
+cursor:pointer;
 }
 
 #categories{
@@ -34,14 +41,18 @@ margin-bottom:15px;
 gap:10px;
 }
 
+.row span{
+min-width:220px;
+text-align:right;
+}
+
 .row select{
 padding:8px;
 font-size:16px;
 }
 
 .row button{
-padding:8px 14px;
-font-size:16px;
+padding:8px 12px;
 cursor:pointer;
 }
 
@@ -56,13 +67,13 @@ border-radius:6px;
 
 </head>
 
-
 <body>
 
 <h1>Admin Control Panel</h1>
 
-<div id="categories"></div>
+<button id="resetButton">Reset Scores</button>
 
+<div id="categories"></div>
 
 <script src="/socket.io/socket.io.js"></script>
 
@@ -74,11 +85,11 @@ const ADMIN_PASSWORD = "f1!msk00lF$U";
 
 socket.on("INIT",(data)=>{
 
-const categories = data.categories;
-
 const container = document.getElementById("categories");
 
 container.innerHTML="";
+
+const categories = data.categories;
 
 Object.keys(categories).forEach(category=>{
 
@@ -101,12 +112,9 @@ select.appendChild(option);
 });
 
 const button = document.createElement("button");
-button.innerText = "Set Winner";
-
+button.innerText="Set Winner";
 
 button.onclick = async function(){
-
-console.log("Button clicked");
 
 const response = await fetch("/winner",{
 method:"POST",
@@ -123,16 +131,14 @@ nominee:select.value
 console.log("Winner sent:",category,select.value);
 console.log("Server response:",response.status);
 
-if(response.status === 200){
+if(response.status===200){
 
-button.innerText = "Winner Selected";
-
+button.innerText="Winner Selected";
 row.classList.add("completed");
 
 }
 
 };
-
 
 row.appendChild(label);
 row.appendChild(select);
@@ -143,6 +149,23 @@ container.appendChild(row);
 });
 
 });
+
+document.getElementById("resetButton").onclick = async function(){
+
+if(!confirm("Reset all scores?")) return;
+
+const response = await fetch("/reset",{
+method:"POST",
+headers:{
+"x-admin":ADMIN_PASSWORD
+}
+});
+
+console.log("Reset response:",response.status);
+
+location.reload();
+
+};
 
 </script>
 
