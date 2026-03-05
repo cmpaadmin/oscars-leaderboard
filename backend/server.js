@@ -81,7 +81,7 @@ res.on("data",(chunk)=>data+=chunk);
 
 res.on("end",()=>{
 
-if(!data.includes("Timestamp")){
+if(data.trim().length < 50){
 console.log("Sheet response invalid");
 return;
 }
