@@ -57,6 +57,25 @@ button.onclick = () => {
 
 button.onclick = async () => {
 
+console.log("Button clicked");
+
+const response = await fetch("/winner",{
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json",
+    "x-admin":"oscars2025"
+  },
+  body:JSON.stringify({
+    category: category,
+    nominee: select.value
+  })
+});
+
+console.log("Winner sent:",category,select.value);
+console.log("Server response:",response.status);
+
+};
+
 const response = await fetch("https://oscars-leaderboard-1.onrender.com/winner",{
   method:"POST",
   headers:{
