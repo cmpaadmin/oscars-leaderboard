@@ -9,7 +9,7 @@
 <style>
 
 body{
-background-image:url("/images/background.jpg");
+background-image:url("/images/background.png");
 background-size:cover;
 background-position:center;
 background-repeat:no-repeat;
@@ -22,33 +22,67 @@ overflow:hidden;
 margin:0;
 }
 
-#leaderboard{
-margin-top:120px;
-font-size:48px;
-}
 
-.entry{
-margin:10px;
-}
-
-.rank{
-margin-right:20px;
-}
+/* TABULATING SCREEN */
 
 #tabulatingMessage{
 position:absolute;
 top:50%;
 left:50%;
 transform:translate(-50%,-50%);
-font-size:50px;
+font-size:52px;
+letter-spacing:2px;
 }
+
+
+/* LEADERBOARD */
+
+#leaderboard{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:48px;
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+.entry{
+margin:12px;
+opacity:0;
+transform:translateY(40px);
+animation:slideUp .6s ease forwards;
+}
+
+.rank{
+margin-right:20px;
+}
+
+
+@keyframes slideUp{
+
+from{
+opacity:0;
+transform:translateY(40px);
+}
+
+to{
+opacity:1;
+transform:translateY(0);
+}
+
+}
+
+
+/* WINNER POPUP */
 
 #winnerOverlay{
 position:fixed;
-top:40%;
+top:50%;
 left:50%;
 transform:translate(-50%,-50%);
-z-index:1000;
+z-index:2000;
 display:none;
 }
 
@@ -56,16 +90,20 @@ display:none;
 background:black;
 border:4px solid gold;
 padding:40px;
-border-radius:10px;
-font-size:40px;
-box-shadow:0 0 30px gold;
+border-radius:12px;
+font-size:42px;
+text-align:center;
+box-shadow:0 0 40px gold;
 }
 
 </style>
 
 </head>
 
+
+
 <body>
+
 
 <div id="tabulatingMessage">
 VOTES ARE BEING TABULATED<span id="dots"></span>
@@ -73,24 +111,38 @@ VOTES ARE BEING TABULATED<span id="dots"></span>
 
 <div id="leaderboard"></div>
 
+
 <div id="winnerOverlay">
 <div class="overlay-content">
+
 <div id="overlayCategory"></div>
-<div>Winner: <span id="overlayWinner"></span></div>
-<div>Most Chosen: <span id="overlayMost"></span></div>
+
+<div>
+Winner: <span id="overlayWinner"></span>
+</div>
+
+<div>
+Most Chosen: <span id="overlayMost"></span>
+</div>
+
 </div>
 </div>
 
+
+
 <script src="/socket.io/socket.io.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
 
 <script>
 
 const socket = io();
 
-let dotCount=0;
 
 /* animated dots */
+
+let dotCount=0;
 
 setInterval(()=>{
 
@@ -104,6 +156,8 @@ dots.innerText=".".repeat(dotCount);
 
 
 
+/* LEADERBOARD UPDATE */
+
 socket.on("LEADERBOARD",(payload)=>{
 
 if(!payload.started) return;
@@ -111,7 +165,6 @@ if(!payload.started) return;
 const data = payload.data;
 
 const tab = document.getElementById("tabulatingMessage");
-
 if(tab) tab.remove();
 
 const div = document.getElementById("leaderboard");
@@ -120,25 +173,83 @@ div.innerHTML="";
 
 if(!data || data.length===0) return;
 
-data.sort((a,b)=>b.score-a.score);
 
-const top5 = data.slice(0,5);
+/* GROUP PLAYERS BY SCORE */
 
-top5.forEach((p,index)=>{
+const grouped = {};
+
+data.forEach(player=>{
+
+if(!grouped[player.score]) grouped[player.score]=[];
+
+grouped[player.score].push(player.name);
+
+});
+
+
+const scores = Object.keys(grouped)
+.map(Number)
+.sort((a,b)=>b-a);
+
+
+let rank = 1;
+
+
+scores.forEach(score=>{
+
+const players = grouped[score];
+
+if(rank>5) return;
+
+
+/* MANY TIED */
+
+if(players.length>3){
 
 div.innerHTML += `
 <div class="entry">
-<span class="rank">#${index+1}</span>
-<span>${p.name}</span>
-<span> ${p.score}</span>
+<span class="rank">#${rank}</span>
+<span>${players.length} people tied</span>
+<span> ${score}</span>
 </div>
 `;
 
+rank++;
+
+}
+
+
+/* FEW TIED */
+
+else{
+
+players.forEach(name=>{
+
+if(rank<=5){
+
+div.innerHTML += `
+<div class="entry">
+<span class="rank">#${rank}</span>
+<span>${name}</span>
+<span> ${score}</span>
+</div>
+`;
+
+rank++;
+
+}
+
+});
+
+}
+
 });
 
 });
 
 
+
+/* WINNER EVENT */
 
 socket.on("WINNER",(data)=>{
 
@@ -149,6 +260,7 @@ launchConfetti();
 });
 
 
+/* RESET */
 
 socket.on("RESET",()=>{
 
@@ -158,15 +270,21 @@ location.reload();
 
 
 
+/* WINNER POPUP */
+
 function showOverlay(data){
 
 const overlay = document.getElementById("winnerOverlay");
 
 document.getElementById("overlayCategory").innerText = data.category;
+
 document.getElementById("overlayWinner").innerText = data.winner;
+
 document.getElementById("overlayMost").innerText = data.mostChosen || "N/A";
 
+
 overlay.style.display="block";
+
 
 setTimeout(()=>{
 
@@ -177,6 +295,8 @@ overlay.style.display="none";
 }
 
 
+
+/* CONFETTI */
 
 function launchConfetti(){
 
