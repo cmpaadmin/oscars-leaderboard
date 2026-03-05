@@ -97,7 +97,7 @@ box-shadow:0 0 40px gold;
 }
 
 </style>
-
+<link rel="stylesheet" href="style.css">
 </head>
 
 
@@ -160,6 +160,8 @@ dots.innerText=".".repeat(dotCount);
 
 socket.on("LEADERBOARD",(payload)=>{
 
+/* DO NOTHING UNTIL FIRST WINNER */
+
 if(!payload.started) return;
 
 const data = payload.data;
@@ -172,6 +174,76 @@ const div = document.getElementById("leaderboard");
 div.innerHTML="";
 
 if(!data || data.length===0) return;
+
+
+/* group scores for tie logic */
+
+const grouped={};
+
+data.forEach(player=>{
+
+if(!grouped[player.score]) grouped[player.score]=[];
+
+grouped[player.score].push(player.name);
+
+});
+
+
+const scores = Object.keys(grouped)
+.map(Number)
+.sort((a,b)=>b-a);
+
+
+let rank=1;
+
+scores.forEach(score=>{
+
+const players = grouped[score];
+
+if(rank>5) return;
+
+
+if(players.length>3){
+
+const leaderClass = rank===1 ? "entry leader" : "entry";
+
+div.innerHTML += `
+<div class="${leaderClass}">
+<span class="rank">#${rank}</span>
+<span>${players.length} people tied</span>
+<span> ${score}</span>
+</div>
+`;
+
+rank++;
+
+}else{
+
+players.forEach(name=>{
+
+if(rank<=5){
+
+const leaderClass = rank===1 ? "entry leader" : "entry";
+
+div.innerHTML += `
+<div class="${leaderClass}">
+<span class="rank">#${rank}</span>
+<span>${name}</span>
+<span> ${score}</span>
+</div>
+`;
+
+rank++;
+
+}
+
+});
+
+}
+
+});
+
+});
 
 
 /* GROUP PLAYERS BY SCORE */
