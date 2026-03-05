@@ -66,17 +66,103 @@ dots.innerText = ".".repeat(dotCount);
 
 socket.on("LEADERBOARD",(payload)=>{
 
-if(!payload.started) return;
-
 const data = payload.data;
 
-document.getElementById("tabulatingMessage").style.display="none";
+if(!data || data.length===0) return;
+
+
+/* DO NOT SHOW LEADERBOARD UNTIL SOMEONE HAS POINTS */
+
+const maxScore = Math.max(...data.map(p => p.score));
+
+if(maxScore === 0) return;
+
+
+/* hide tabulating screen */
+
+const tab = document.getElementById("tabulatingMessage");
+if(tab) tab.style.display="none";
+
 
 const div = document.getElementById("leaderboard");
-
 div.innerHTML="";
 
-if(!data || data.length===0) return;
+
+/* GROUP TIES */
+
+const grouped={};
+
+data.forEach(player=>{
+
+if(!grouped[player.score]) grouped[player.score]=[];
+
+grouped[player.score].push(player.name);
+
+});
+
+
+const scores = Object.keys(grouped)
+.map(Number)
+.sort((a,b)=>b-a);
+
+
+let rank=1;
+
+scores.forEach(score=>{
+
+const players = grouped[score];
+
+if(rank>5) return;
+
+
+/* MANY TIED */
+
+if(players.length>3){
+
+const leaderClass = rank===1 ? "entry leader" : "entry";
+
+div.innerHTML += `
+<div class="${leaderClass}">
+<span class="rank">#${rank}</span>
+<span>${players.length} people tied</span>
+<span> ${score}</span>
+</div>
+`;
+
+rank++;
+
+}
+
+
+/* FEW TIED */
+
+else{
+
+players.forEach(name=>{
+
+if(rank<=5){
+
+const leaderClass = rank===1 ? "entry leader" : "entry";
+
+div.innerHTML += `
+<div class="${leaderClass}">
+<span class="rank">#${rank}</span>
+<span>${name}</span>
+<span> ${score}</span>
+</div>
+`;
+
+rank++;
+
+}
+
+});
+
+}
+
+});
+
+});
 
 
 /* group ties */
