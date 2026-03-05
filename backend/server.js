@@ -7,7 +7,10 @@ import csv from "csv-parser";
 import { Readable } from "stream";
 
 const ADMIN_PASSWORD = "f1!msk00lF$U";
-const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOW0D_7N_4XAuMQKM71quXgdPKFj3h52QF_rCAIo5-Uo3WQAjDOqHQr3JrfiemGkh644Yp-W8G2PrF/pub?gid=1643430082&single=true&output=csv";
+
+/* paste your Google sheet CSV here */
+const GOOGLE_SHEET_URL =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vTOW0D_7N_4XAuMQKM71quXgdPKFj3h52QF_rCAIo5-Uo3WQAjDOqHQr3JrfiemGkh644Yp-W8G2PrF/pub?output=csv";
 
 const app = express();
 const server = http.createServer(app);
@@ -23,7 +26,7 @@ let leaderboard = [];
 
 
 /* -----------------------------
-   LOAD CATEGORY LIST
+   LOAD CATEGORY CSV
 ------------------------------*/
 
 function loadCategories(){
@@ -66,21 +69,21 @@ recalcLeaderboard();
 
 
 /* -----------------------------
-   FETCH GOOGLE SHEET
+   FETCH GOOGLE SHEET (WITH REDIRECT)
 ------------------------------*/
 
-function fetchGoogleSheet(){
+function fetchGoogleSheet(url = GOOGLE_SHEET_URL){
 
-if(data.startsWith("<")){
-console.log("Google returned HTML instead of CSV");
-return;
-}
-if(!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes("PASTE")){
-console.log("Google Sheet URL not configured");
-return;
-}
+https.get(url,{
+headers:{ "User-Agent":"Mozilla/5.0" }
+},(res)=>{
 
-https.get(GOOGLE_SHEET_URL,(res)=>{
+/* follow redirect */
+
+if(res.statusCode >= 300 && res.statusCode < 400 && res.headers.location){
+console.log("Following redirect...");
+return fetchGoogleSheet(res.headers.location);
+}
 
 let data="";
 
@@ -88,8 +91,10 @@ res.on("data",(chunk)=>data+=chunk);
 
 res.on("end",()=>{
 
-if(data.trim().length < 50){
-console.log("Sheet response invalid");
+/* prevent HTML responses */
+
+if(data.startsWith("<")){
+console.log("Google returned HTML instead of CSV");
 return;
 }
 
@@ -107,7 +112,7 @@ console.log("Google fetch failed:",err);
 
 
 /* -----------------------------
-   PARSE GOOGLE SHEET
+   PARSE GOOGLE FORM CSV
 ------------------------------*/
 
 function parseGoogleCSV(csvText){
@@ -116,9 +121,7 @@ const rows = [];
 
 Readable.from(csvText)
 .pipe(csv())
-.on("data",(row)=>{
-rows.push(row);
-})
+.on("data",(row)=>rows.push(row))
 .on("end",()=>{
 
 if(rows.length === 0){
@@ -136,7 +139,14 @@ rows.forEach((row)=>{
 
 const values = Object.values(row);
 
-const name = values[1]; // column 2 = name
+/* Google Forms format
+0 = Timestamp
+1 = Name
+2 = Email
+3+ = Categories
+*/
+
+const name = values[1];
 
 if(!name) return;
 
@@ -231,7 +241,7 @@ return nominee;
 
 
 /* -----------------------------
-   ADMIN SELECT WINNER
+   ADMIN SET WINNER
 ------------------------------*/
 
 app.post("/winner",(req,res)=>{
@@ -244,7 +254,7 @@ const {category,nominee} = req.body;
 
 const cat = category.trim().toUpperCase();
 
-console.log("Winner received:",cat,nominee);
+console.log("Winner selected:",cat,nominee);
 
 winners[cat] = nominee;
 
@@ -282,6 +292,8 @@ winners
 
 loadCategories();
 fetchGoogleSheet();
+
+/* refresh picks every 30 seconds */
 
 setInterval(fetchGoogleSheet,30000);
 
