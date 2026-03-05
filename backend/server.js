@@ -43,6 +43,8 @@ fs.createReadStream("backend/data/categories.csv")
 .pipe(csv())
 .on("data",(row)=>{
 
+if(!row.category || !row.nominee) return;
+
 const category = row.category.trim().toUpperCase();
 const nominee = row.nominee.trim();
 
