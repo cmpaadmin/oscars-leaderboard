@@ -23,294 +23,256 @@ let categories = {};
 let picks = [];
 let winners = {};
 let leaderboard = [];
-let firstWinnerSelected = false;
-
 
 /* -----------------------------
    LOAD CATEGORY CSV
 ------------------------------*/
 
-function loadCategories(){
+function loadCategories() {
+  categories = {};
 
-categories = {};
+  if (!fs.existsSync("backend/data/categories.csv")) {
+    console.log("No categories.csv found");
+    return;
+  }
 
-if(!fs.existsSync("backend/data/categories.csv")){
-console.log("No categories.csv found");
-return;
+  fs.createReadStream("backend/data/categories.csv")
+    .pipe(csv())
+    .on("data", (row) => {
+      if (!row.category || !row.nominee) return;
+
+      const category = row.category.trim().toUpperCase();
+      const nominee = row.nominee.trim();
+
+      if (!category || !nominee) return;
+
+      if (!categories[category]) {
+        categories[category] = {
+          nominees: [],
+          points: parseInt(row.points || 1, 10)
+        };
+      }
+
+      categories[category].nominees.push(nominee);
+    })
+    .on("end", () => {
+      console.log("Categories loaded:", Object.keys(categories).length);
+      recalcLeaderboard();
+    });
 }
-
-fs.createReadStream("backend/data/categories.csv")
-.pipe(csv())
-.on("data",(row)=>{
-
-if(!row.category || !row.nominee) return;
-
-const category = row.category.trim().toUpperCase();
-const nominee = row.nominee.trim();
-
-if(!categories[category]){
-
-categories[category] = {
-nominees:[],
-points:parseInt(row.points || 1)
-};
-
-}
-
-categories[category].nominees.push(nominee);
-
-})
-.on("end",()=>{
-
-console.log("Categories loaded:",Object.keys(categories).length);
-
-recalcLeaderboard();
-
-});
-
-}
-
 
 /* -----------------------------
    FETCH GOOGLE SHEET (WITH REDIRECT)
 ------------------------------*/
 
-function fetchGoogleSheet(url = GOOGLE_SHEET_URL){
+function fetchGoogleSheet(url = GOOGLE_SHEET_URL) {
+  https
+    .get(
+      url,
+      {
+        headers: { "User-Agent": "Mozilla/5.0" }
+      },
+      (res) => {
+        if (
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location
+        ) {
+          console.log("Following redirect...");
+          return fetchGoogleSheet(res.headers.location);
+        }
 
-https.get(url,{
-headers:{ "User-Agent":"Mozilla/5.0" }
-},(res)=>{
+        let data = "";
 
-/* follow redirect */
+        res.on("data", (chunk) => (data += chunk));
 
-if(res.statusCode >= 300 && res.statusCode < 400 && res.headers.location){
-console.log("Following redirect...");
-return fetchGoogleSheet(res.headers.location);
+        res.on("end", () => {
+          if (data.trim().startsWith("<")) {
+            console.log("Google returned HTML instead of CSV");
+            return;
+          }
+
+          parseGoogleCSV(data);
+        });
+      }
+    )
+    .on("error", (err) => {
+      console.log("Google fetch failed:", err);
+    });
 }
-
-let data="";
-
-res.on("data",(chunk)=>data+=chunk);
-
-res.on("end",()=>{
-
-/* prevent HTML responses */
-
-if(data.startsWith("<")){
-console.log("Google returned HTML instead of CSV");
-return;
-}
-
-parseGoogleCSV(data);
-
-});
-
-}).on("error",(err)=>{
-
-console.log("Google fetch failed:",err);
-
-});
-
-}
-
 
 /* -----------------------------
    PARSE GOOGLE FORM CSV
 ------------------------------*/
 
-function parseGoogleCSV(csvText){
+function parseGoogleCSV(csvText) {
+  const rows = [];
 
-const rows = [];
+  Readable.from(csvText)
+    .pipe(csv())
+    .on("data", (row) => rows.push(row))
+    .on("end", () => {
+      if (rows.length === 0) {
+        console.log("No rows found in sheet");
+        return;
+      }
 
-Readable.from(csvText)
-.pipe(csv())
-.on("data",(row)=>rows.push(row))
-.on("end",()=>{
+      const headers = Object.keys(rows[0]);
+      console.log("Detected headers:", headers);
 
-if(rows.length === 0){
-console.log("No rows found in sheet");
-return;
+      picks = [];
+
+      rows.forEach((row) => {
+        const values = Object.values(row);
+
+        /* Google Forms format
+           0 = Timestamp
+           1 = Name
+           2 = Email
+           3+ = Categories
+        */
+
+        const name = values[1];
+
+        if (!name || !String(name).trim()) return;
+
+        for (let i = 3; i < values.length; i++) {
+          const category = headers[i];
+          const nominee = values[i];
+
+          if (
+            category &&
+            nominee &&
+            String(category).trim() &&
+            String(nominee).trim()
+          ) {
+            picks.push({
+              name: String(name).trim(),
+              category: String(category).trim().toUpperCase(),
+              nominee: String(nominee).trim()
+            });
+          }
+        }
+      });
+
+      console.log("Picks loaded:", picks.length);
+      recalcLeaderboard();
+    });
 }
-
-const headers = Object.keys(rows[0]);
-
-console.log("Detected headers:",headers);
-
-picks = [];
-
-rows.forEach((row)=>{
-
-const values = Object.values(row);
-
-/* Google Forms format
-0 = Timestamp
-1 = Name
-2 = Email
-3+ = Categories
-*/
-
-const name = values[1];
-
-if(!name) return;
-
-for(let i=3;i<values.length;i++){
-
-const category = headers[i];
-const nominee = values[i];
-
-if(category && nominee){
-
-picks.push({
-name:name.trim(),
-category:category.trim().toUpperCase(),
-nominee:nominee.trim()
-});
-
-}
-
-}
-
-});
-
-console.log("Picks loaded:",picks.length);
-
-recalcLeaderboard();
-
-});
-
-}
-
 
 /* -----------------------------
    CALCULATE LEADERBOARD
 ------------------------------*/
 
-function recalcLeaderboard(){
+function recalcLeaderboard() {
+  const scores = {};
 
-const scores = {};
+  picks.forEach((p) => {
+    if (!scores[p.name]) scores[p.name] = 0;
 
-picks.forEach((p)=>{
+    if (winners[p.category] === p.nominee) {
+      scores[p.name] += categories[p.category]?.points || 1;
+    }
+  });
 
-if(!scores[p.name]) scores[p.name] = 0;
+  leaderboard = Object.entries(scores)
+    .map(([name, score]) => ({ name, score }))
+    .sort((a, b) => b.score - a.score);
 
-if(winners[p.category] === p.nominee){
+  const started = Object.values(winners).some((v) => !!v);
 
-scores[p.name] += categories[p.category]?.points || 1;
-
+  io.emit("LEADERBOARD", {
+    data: leaderboard,
+    started
+  });
 }
-
-});
-
-leaderboard = Object.entries(scores)
-.map(([name,score])=>({name,score}))
-.sort((a,b)=>b.score-a.score);
-
-const started = Object.values(winners).some(v => !!v);
-
-io.emit("LEADERBOARD", {
-  data: leaderboard,
-  started
-});
-
-}
-
 
 /* -----------------------------
    MOST CHOSEN NOMINEE
 ------------------------------*/
 
-function mostChosen(category){
+function mostChosen(category) {
+  const counts = {};
 
-const counts = {};
+  picks
+    .filter((p) => p.category === category)
+    .forEach((p) => {
+      counts[p.nominee] = (counts[p.nominee] || 0) + 1;
+    });
 
-picks
-.filter(p=>p.category === category)
-.forEach((p)=>{
+  let max = 0;
+  let nominee = null;
 
-counts[p.nominee] = (counts[p.nominee] || 0) + 1;
+  for (const n in counts) {
+    if (counts[n] > max) {
+      max = counts[n];
+      nominee = n;
+    }
+  }
 
-});
-
-let max = 0;
-let nominee = null;
-
-for(const n in counts){
-
-if(counts[n] > max){
-max = counts[n];
-nominee = n;
+  return nominee;
 }
-
-}
-
-return nominee;
-
-}
-
 
 /* -----------------------------
    ADMIN SET WINNER
 ------------------------------*/
 
-app.post("/winner",(req,res)=>{
+app.post("/winner", (req, res) => {
+  if (req.headers["x-admin"] !== ADMIN_PASSWORD) {
+    return res.sendStatus(403);
+  }
 
-if(req.headers["x-admin"] !== ADMIN_PASSWORD){
-return res.sendStatus(403);
-}
+  const { category, nominee } = req.body;
 
-const {category,nominee} = req.body;
+  if (!category || !nominee) {
+    return res.status(400).send("Missing category or nominee");
+  }
 
-const cat = category.trim().toUpperCase();
+  const cat = String(category).trim().toUpperCase();
+  const selectedNominee = String(nominee).trim();
 
-console.log("Winner selected:",cat,nominee);
+  console.log("Winner selected:", cat, selectedNominee);
 
-winners[cat] = nominee;
-firstWinnerSelected = true;
-recalcLeaderboard();
+  winners[cat] = selectedNominee;
 
-io.emit("WINNER",{
-category:cat,
-winner:nominee,
-mostChosen:mostChosen(cat)
+  recalcLeaderboard();
+
+  io.emit("WINNER", {
+    category: cat,
+    winner: selectedNominee,
+    mostChosen: mostChosen(cat)
+  });
+
+  res.sendStatus(200);
 });
 
-res.sendStatus(200);
+app.post("/reset", (req, res) => {
+  if (req.headers["x-admin"] !== ADMIN_PASSWORD) {
+    return res.sendStatus(403);
+  }
 
-});
+  console.log("Scores reset");
 
-app.post("/reset",(req,res)=>{
+  winners = {};
+  leaderboard = [];
 
-if(req.headers["x-admin"] !== ADMIN_PASSWORD){
-return res.sendStatus(403);
-}
+  io.emit("RESET");
+  recalcLeaderboard();
 
-console.log("Scores reset");
-
-winners = {};
-leaderboard = [];
-
-io.emit("RESET");
-
-recalcLeaderboard();
-
-res.sendStatus(200);
-
+  res.sendStatus(200);
 });
 
 /* -----------------------------
    SOCKET CONNECTION
 ------------------------------*/
 
-io.on("connection",(socket)=>{
-
-socket.emit("INIT",{
-categories,
-leaderboard,
-winners
+io.on("connection", (socket) => {
+  socket.emit("INIT", {
+    categories,
+    leaderboard,
+    winners
+  });
 });
-
-});
-
 
 /* -----------------------------
    START SERVER
@@ -320,13 +282,10 @@ loadCategories();
 fetchGoogleSheet();
 
 /* refresh picks every 30 seconds */
-
-setInterval(fetchGoogleSheet,30000);
+setInterval(fetchGoogleSheet, 30000);
 
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT,()=>{
-
-console.log("Server running on port",PORT);
-
+server.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
