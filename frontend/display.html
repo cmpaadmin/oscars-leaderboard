@@ -70,9 +70,17 @@ dots.innerText = ".".repeat(dotCount);
 
 socket.on("LEADERBOARD",(payload)=>{
 
-const data = payload.data;
+if(!payload || !payload.started) return;
 
-if(!data || data.length === 0) return;
+const data = payload.data || [];
+
+const tab = document.getElementById("tabulatingMessage");
+if(tab) tab.style.display = "none";
+
+const div = document.getElementById("leaderboard");
+div.innerHTML = "";
+
+if(data.length === 0) return;
 
 
 /* do not show leaderboard until someone has points */
