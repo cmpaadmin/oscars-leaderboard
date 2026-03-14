@@ -205,9 +205,11 @@ leaderboard = Object.entries(scores)
 .map(([name,score])=>({name,score}))
 .sort((a,b)=>b.score-a.score);
 
-io.emit("LEADERBOARD",{
-data: leaderboard,
-started: firstWinnerSelected
+const started = Object.values(winners).some(v => !!v);
+
+io.emit("LEADERBOARD", {
+  data: leaderboard,
+  started
 });
 
 }
