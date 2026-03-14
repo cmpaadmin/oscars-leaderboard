@@ -1,266 +1,177 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
-<meta charset="UTF-8">
-<title>Oscars Leaderboard</title>
-
-<link rel="stylesheet" href="style.css">
-
+  <meta charset="UTF-8" />
+  <title>Oscars Leaderboard</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
-
 <body>
 
-<div id="tabulatingMessage">
-VOTES ARE BEING TABULATED<span id="dots"></span>
-</div>
-
-<div id="leaderboard"></div>
-
-<div id="winnerOverlay">
-<div class="overlay-content">
-
-<div id="overlayCategory"></div>
-
-<div>
-Winner: <span id="overlayWinner"></span>
-</div>
-
-<div>
-Most Chosen: <span id="overlayMost"></span>
-</div>
-
-</div>
-</div>
-
-
-<script src="/socket.io/socket.io.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-<script>
-
-const socket = io();
-
-let dotCount = 0;
-
-/* TABULATING DOTS */
-
-setInterval(() => {
-
-const dots = document.getElementById("dots");
-
-if(!dots) return;
-
-dotCount = (dotCount + 1) % 4;
-
-dots.innerText = ".".repeat(dotCount);
-
-},500);
-
-
-
-/* LEADERBOARD UPDATE */
-
-socket.on("LEADERBOARD",(payload)=>{
-
-if(!payload || !payload.started) return;
-
-const data = payload.data || [];
-
-const tab = document.getElementById("tabulatingMessage");
-if(tab) tab.style.display = "none";
-
-const div = document.getElementById("leaderboard");
-div.innerHTML = "";
-
-if(data.length === 0) return;
-
-
-/* do not show leaderboard until someone has points */
-
-const maxScore = Math.max(...data.map(p => p.score));
-
-if(maxScore === 0) return;
-
-
-/* hide tabulating screen */
-
-const tab = document.getElementById("tabulatingMessage");
-
-if(tab) tab.style.display = "none";
-
-
-const div = document.getElementById("leaderboard");
-
-div.innerHTML = "";
-
-
-/* group ties */
-
-const grouped = {};
-
-data.forEach(player => {
-
-if(!grouped[player.score]) grouped[player.score] = [];
-
-grouped[player.score].push(player.name);
-
-});
-
-
-const scores = Object.keys(grouped)
-.map(Number)
-.sort((a,b)=>b-a);
-
-
-let rank = 1;
-
-scores.forEach(score => {
-
-const players = grouped[score];
-
-if(rank > 5) return;
-
-
-/* many tied */
-
-if(players.length > 3){
-
-const leaderClass = rank === 1 ? "entry leader" : "entry";
-
-div.innerHTML += `
-<div class="${leaderClass}">
-<span class="rank">#${rank}</span>
-<span>${players.length} people tied</span>
-<span> ${score}</span>
-</div>
-`;
-
-rank++;
-
-}
-
-
-/* few tied */
-
-else{
-
-players.forEach(name => {
-
-if(rank <= 5){
-
-const leaderClass = rank === 1 ? "entry leader" : "entry";
-
-div.innerHTML += `
-<div class="${leaderClass}">
-<span class="rank">#${rank}</span>
-<span>${name}</span>
-<span> ${score}</span>
-</div>
-`;
-
-rank++;
-
-}
-
-});
-
-}
-
-});
-
-});
-
-
-
-/* WINNER POPUP */
-
-socket.on("WINNER",(data)=>{
-
-showOverlay(data);
-
-launchConfetti();
-
-});
-
-
-
-/* RESET */
-
-socket.on("RESET",()=>{
-
-location.reload();
-
-});
-
-
-
-/* POPUP */
-
-function showOverlay(data){
-
-const overlay = document.getElementById("winnerOverlay");
-
-document.getElementById("overlayCategory").innerText = data.category;
-
-document.getElementById("overlayWinner").innerText = data.winner;
-
-document.getElementById("overlayMost").innerText = data.mostChosen || "N/A";
-
-overlay.style.display = "block";
-
-setTimeout(()=>{
-
-overlay.style.display = "none";
-
-},10000);
-
-}
-
-
-
-/* CONTINUOUS CONFETTI */
-
-function launchConfetti(){
-
-const duration = 10000;
-
-const end = Date.now() + duration;
-
-(function frame(){
-
-confetti({
-particleCount:6,
-angle:60,
-spread:70,
-origin:{x:0},
-zIndex:9999
-});
-
-confetti({
-particleCount:6,
-angle:120,
-spread:70,
-origin:{x:1},
-zIndex:9999
-});
-
-if(Date.now() < end){
-requestAnimationFrame(frame);
-}
-
-})();
-
-}
-
-</script>
-
+  <div id="tabulatingMessage">
+    VOTES ARE BEING TABULATED<span id="dots"></span>
+  </div>
+
+  <div id="leaderboard"></div>
+
+  <div id="winnerOverlay">
+    <div class="overlay-content">
+      <div id="overlayCategory"></div>
+      <div>Winner: <span id="overlayWinner"></span></div>
+      <div>Most Chosen: <span id="overlayMost"></span></div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    const socket = io();
+    let dotCount = 0;
+    let overlayTimer = null;
+
+    setInterval(() => {
+      const dots = document.getElementById("dots");
+      if (!dots) return;
+      dotCount = (dotCount + 1) % 4;
+      dots.textContent = ".".repeat(dotCount);
+    }, 500);
+
+    socket.on("INIT", (payload) => {
+      if (!payload) return;
+      const started = Object.keys(payload.winners || {}).length > 0;
+      if (started) {
+        renderLeaderboard(payload.leaderboard || []);
+      } else {
+        showTabulating();
+      }
+    });
+
+    socket.on("LEADERBOARD", (payload) => {
+      if (!payload) return;
+
+      if (!payload.started) {
+        showTabulating();
+        return;
+      }
+
+      renderLeaderboard(payload.data || []);
+    });
+
+    socket.on("WINNER", (data) => {
+      showOverlay(data);
+      launchConfetti();
+    });
+
+    socket.on("RESET", () => {
+      showTabulating();
+      const div = document.getElementById("leaderboard");
+      if (div) div.innerHTML = "";
+      const overlay = document.getElementById("winnerOverlay");
+      if (overlay) overlay.style.display = "none";
+    });
+
+    function showTabulating() {
+      const tab = document.getElementById("tabulatingMessage");
+      const div = document.getElementById("leaderboard");
+      if (tab) tab.style.display = "block";
+      if (div) div.innerHTML = "";
+    }
+
+    function renderLeaderboard(data) {
+      const tab = document.getElementById("tabulatingMessage");
+      if (tab) tab.style.display = "none";
+
+      const div = document.getElementById("leaderboard");
+      if (!div) return;
+      div.innerHTML = "";
+
+      if (!data || data.length === 0) return;
+
+      const grouped = {};
+      data.forEach((player) => {
+        if (!grouped[player.score]) grouped[player.score] = [];
+        grouped[player.score].push(player.name);
+      });
+
+      const scores = Object.keys(grouped)
+        .map(Number)
+        .sort((a, b) => b - a);
+
+      let rank = 1;
+
+      scores.forEach((score) => {
+        const players = grouped[score];
+        if (rank > 5) return;
+
+        if (players.length > 3) {
+          const leaderClass = rank === 1 ? "entry leader" : "entry";
+          div.innerHTML += `
+            <div class="${leaderClass}">
+              <span class="rank">#${rank}</span>
+              <span>${players.length} people tied</span>
+              <span> ${score}</span>
+            </div>
+          `;
+          rank++;
+        } else {
+          players.forEach((name) => {
+            if (rank <= 5) {
+              const leaderClass = rank === 1 ? "entry leader" : "entry";
+              div.innerHTML += `
+                <div class="${leaderClass}">
+                  <span class="rank">#${rank}</span>
+                  <span>${name}</span>
+                  <span> ${score}</span>
+                </div>
+              `;
+              rank++;
+            }
+          });
+        }
+      });
+    }
+
+    function showOverlay(data) {
+      const overlay = document.getElementById("winnerOverlay");
+      if (!overlay) return;
+
+      document.getElementById("overlayCategory").textContent = data?.category || "";
+      document.getElementById("overlayWinner").textContent = data?.winner || "";
+      document.getElementById("overlayMost").textContent = data?.mostChosen || "N/A";
+
+      overlay.style.display = "block";
+
+      if (overlayTimer) clearTimeout(overlayTimer);
+      overlayTimer = setTimeout(() => {
+        overlay.style.display = "none";
+      }, 10000);
+    }
+
+    function launchConfetti() {
+      const end = Date.now() + 10000;
+
+      (function frame() {
+        confetti({
+          particleCount: 6,
+          angle: 60,
+          spread: 70,
+          origin: { x: 0 },
+          zIndex: 9999
+        });
+
+        confetti({
+          particleCount: 6,
+          angle: 120,
+          spread: 70,
+          origin: { x: 1 },
+          zIndex: 9999
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      })();
+    }
+  </script>
 </body>
 </html>
