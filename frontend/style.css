@@ -94,17 +94,16 @@ animation:slideUp .6s ease;
 /* rank number */
 
 .rank{
-
 margin-right:20px;
 
-color:#ffd700;
+color:#d4af37;
 
 font-weight:bold;
 
 text-shadow:
 0 0 6px rgba(255,215,0,0.8),
-0 0 12px rgba(255,215,0,0.6);
-
+0 0 12px rgba(255,215,0,0.6),
+0 0 22px rgba(255,215,0,0.5);
 }
 
 
