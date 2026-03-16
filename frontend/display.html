@@ -103,30 +103,33 @@
         const players = grouped[score];
         if (rank > 5) return;
 
+        const currentRank = rank;
+
         if (players.length > 3) {
-          const leaderClass = rank === 1 ? "entry leader" : "entry";
+          const leaderClass = currentRank === 1 ? "entry leader" : "entry";
           div.innerHTML += `
             <div class="${leaderClass}">
-              <span class="rank">#${rank}</span>
+              <span class="rank">#${currentRank}</span>
               <span>${players.length} people tied</span>
               <span> ${score}</span>
             </div>
           `;
-          rank++;
+          rank += players.length;
         } else {
           players.forEach((name) => {
-            if (rank <= 5) {
-              const leaderClass = rank === 1 ? "entry leader" : "entry";
+            if (currentRank <= 5) {
+              const leaderClass = currentRank === 1 ? "entry leader" : "entry";
               div.innerHTML += `
                 <div class="${leaderClass}">
-                  <span class="rank">#${rank}</span>
+                  <span class="rank">#${currentRank}</span>
                   <span>${name}</span>
                   <span> ${score}</span>
                 </div>
               `;
-              rank++;
             }
           });
+
+          rank += players.length;
         }
       });
     }
