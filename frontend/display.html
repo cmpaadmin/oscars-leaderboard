@@ -13,17 +13,17 @@
 
   <div id="leaderboard"></div>
 
-<div id="winnerOverlay">
-  <div class="overlay-content">
-    <div id="overlayCategory"></div>
+  <div id="winnerOverlay">
+    <div class="overlay-content" id="overlayContent">
+      <div id="overlayCategory"></div>
 
-    <div class="overlay-section-title">Winner</div>
-    <div id="overlayWinner"></div>
+      <div class="overlay-section-title" id="winnerTitle">Winner</div>
+      <div id="overlayWinner"></div>
 
-    <div class="overlay-section-title">Most Chosen</div>
-    <div id="overlayMost"></div>
+      <div class="overlay-section-title" id="mostTitle">Most Chosen</div>
+      <div id="overlayMost"></div>
+    </div>
   </div>
-</div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -72,6 +72,13 @@
       if (div) div.innerHTML = "";
       const overlay = document.getElementById("winnerOverlay");
       if (overlay) overlay.style.display = "none";
+    });
+
+    window.addEventListener("resize", () => {
+      const overlay = document.getElementById("winnerOverlay");
+      if (overlay && overlay.style.display === "block") {
+        fitOverlayText();
+      }
     });
 
     function showTabulating() {
@@ -165,10 +172,58 @@
 
       overlay.style.display = "block";
 
+      requestAnimationFrame(() => {
+        fitOverlayText();
+      });
+
       if (overlayTimer) clearTimeout(overlayTimer);
       overlayTimer = setTimeout(() => {
         overlay.style.display = "none";
       }, 10000);
+    }
+
+    function fitOverlayText() {
+      const box = document.getElementById("overlayContent");
+      const category = document.getElementById("overlayCategory");
+      const winnerTitle = document.getElementById("winnerTitle");
+      const winner = document.getElementById("overlayWinner");
+      const mostTitle = document.getElementById("mostTitle");
+      const most = document.getElementById("overlayMost");
+
+      if (!box || !category || !winnerTitle || !winner || !mostTitle || !most) return;
+
+      category.style.fontSize = "72px";
+      winnerTitle.style.fontSize = "42px";
+      mostTitle.style.fontSize = "42px";
+      winner.style.fontSize = "96px";
+      most.style.fontSize = "96px";
+
+      const maxHeight = box.clientHeight * 0.88;
+      const maxWidth = box.clientWidth * 0.92;
+
+      category.style.maxWidth = maxWidth + "px";
+      winnerTitle.style.maxWidth = maxWidth + "px";
+      winner.style.maxWidth = maxWidth + "px";
+      mostTitle.style.maxWidth = maxWidth + "px";
+      most.style.maxWidth = maxWidth + "px";
+
+      let guard = 0;
+
+      while (box.scrollHeight > maxHeight && guard < 200) {
+        const c = parseFloat(window.getComputedStyle(category).fontSize);
+        const wt = parseFloat(window.getComputedStyle(winnerTitle).fontSize);
+        const w = parseFloat(window.getComputedStyle(winner).fontSize);
+        const mt = parseFloat(window.getComputedStyle(mostTitle).fontSize);
+        const m = parseFloat(window.getComputedStyle(most).fontSize);
+
+        category.style.fontSize = Math.max(24, c - 2) + "px";
+        winnerTitle.style.fontSize = Math.max(18, wt - 1) + "px";
+        mostTitle.style.fontSize = Math.max(18, mt - 1) + "px";
+        winner.style.fontSize = Math.max(26, w - 2) + "px";
+        most.style.fontSize = Math.max(26, m - 2) + "px";
+
+        guard++;
+      }
     }
 
     function launchConfetti() {
