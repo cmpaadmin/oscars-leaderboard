@@ -1,293 +1,427 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Oscars Admin</title>
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import https from "https";
+import fs from "fs";
+import csv from "csv-parser";
+import { Readable } from "stream";
 
-<style>
-body{
-background:black;
-color:gold;
-font-family:Arial;
-text-align:center;
-}
-
-h1{
-margin-top:30px;
-}
-
-#resetButton,
-#exportButton{
-margin-top:10px;
-padding:8px 16px;
-font-size:16px;
-cursor:pointer;
-}
-
-#exportButton{
-margin-left:10px;
-display:inline-block;
-}
-
-#categories{
-margin-top:40px;
-width:90%;
-margin-left:auto;
-margin-right:auto;
-}
-
-.row{
-display:flex;
-justify-content:center;
-align-items:center;
-margin-bottom:15px;
-gap:10px;
-flex-wrap:wrap;
-}
-
-.row span{
-min-width:220px;
-text-align:right;
-}
-
-.row select{
-padding:8px;
-font-size:16px;
-min-width:220px;
-}
-
-.row button{
-padding:8px 12px;
-cursor:pointer;
-}
-
-.completed{
-background:gold;
-color:black;
-padding:6px;
-border-radius:6px;
-}
-
-.dual-select-wrap{
-display:flex;
-gap:8px;
-flex-wrap:wrap;
-justify-content:center;
-align-items:center;
-}
-
-.status-text{
-min-width:180px;
-text-align:left;
-font-size:14px;
-color:#fff2a8;
-}
-</style>
-</head>
-<body>
-
-<h1>Admin Control Panel</h1>
-
-<button id="resetButton">Reset Scores</button>
-<button id="exportButton">Export Final CSV</button>
-
-<div id="categories"></div>
-
-<script src="/socket.io/socket.io.js"></script>
-
-<script>
-const socket = io();
 const ADMIN_PASSWORD = "f1!msk00lF$U";
 
-function winnerList(value){
-  if (Array.isArray(value)) return value;
-  if (value) return [value];
-  return [];
-}
+/* paste your Google sheet CSV here */
+const GOOGLE_SHEET_URL =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vTOW0D_7N_4XAuMQKM71quXgdPKFj3h52QF_rCAIo5-Uo3WQAjDOqHQr3JrfiemGkh644Yp-W8G2PrF/pub?output=csv";
 
-function renderAdmin(data){
-  const container = document.getElementById("categories");
-  container.innerHTML = "";
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-  const categories = data.categories || {};
-  const winners = data.winners || {};
+app.use(express.static("frontend"));
+app.use(express.json());
 
-  Object.keys(categories).forEach(category => {
-    const row = document.createElement("div");
-    row.className = "row";
+let categories = {};
+let picks = [];
+let winners = {};
+let leaderboard = [];
 
-    const label = document.createElement("span");
-    label.innerText = category;
+/* -----------------------------
+   LOAD CATEGORY CSV
+------------------------------*/
 
-    const selectWrap = document.createElement("div");
-    selectWrap.className = "dual-select-wrap";
+function loadCategories() {
+  categories = {};
 
-    const select1 = document.createElement("select");
-    const select2 = document.createElement("select");
-
-    const blank1 = document.createElement("option");
-    blank1.value = "";
-    blank1.innerText = "-- Select Winner 1 --";
-    select1.appendChild(blank1);
-
-    const blank2 = document.createElement("option");
-    blank2.value = "";
-    blank2.innerText = "-- Optional Winner 2 --";
-    select2.appendChild(blank2);
-
-    categories[category].nominees.forEach(nominee => {
-      const option1 = document.createElement("option");
-      option1.value = nominee;
-      option1.innerText = nominee;
-      select1.appendChild(option1);
-
-      const option2 = document.createElement("option");
-      option2.value = nominee;
-      option2.innerText = nominee;
-      select2.appendChild(option2);
-    });
-
-    const savedWinners = winnerList(winners[category]);
-
-    if (savedWinners[0]) select1.value = savedWinners[0];
-    if (savedWinners[1]) select2.value = savedWinners[1];
-
-    const setButton = document.createElement("button");
-    setButton.innerText = winners[category] ? "Winner Selected" : "Set Winner(s)";
-
-    const undoButton = document.createElement("button");
-    undoButton.innerText = "Undo Winner";
-
-    const status = document.createElement("div");
-    status.className = "status-text";
-    status.innerText = savedWinners.length > 0
-      ? "Saved: " + savedWinners.join(" / ")
-      : "No winner selected";
-
-    if (winners[category]) {
-      row.classList.add("completed");
-    }
-
-    setButton.onclick = async function(){
-      const nominees = [select1.value, select2.value]
-        .map(v => String(v || "").trim())
-        .filter(v => v);
-
-      const uniqueNominees = [...new Set(nominees)];
-
-      if (uniqueNominees.length === 0) {
-        alert("Please select at least one winner.");
-        return;
-      }
-
-      const response = await fetch("/winner", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin": ADMIN_PASSWORD
-        },
-        body: JSON.stringify({
-          category: category,
-          nominee: uniqueNominees
-        })
-      });
-
-      console.log("Winner sent:", category, uniqueNominees);
-      console.log("Server response:", response.status);
-
-      if (response.status === 200) {
-        setButton.innerText = "Winner Selected";
-        row.classList.add("completed");
-        status.innerText = "Saved: " + uniqueNominees.join(" / ");
-      }
-    };
-
-    undoButton.onclick = async function(){
-      const response = await fetch("/undo-winner", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin": ADMIN_PASSWORD
-        },
-        body: JSON.stringify({
-          category: category
-        })
-      });
-
-      console.log("Undo winner:", category);
-      console.log("Server response:", response.status);
-
-      if (response.status === 200) {
-        select1.value = "";
-        select2.value = "";
-        setButton.innerText = "Set Winner(s)";
-        row.classList.remove("completed");
-        status.innerText = "No winner selected";
-      }
-    };
-
-    selectWrap.appendChild(select1);
-    selectWrap.appendChild(select2);
-
-    row.appendChild(label);
-    row.appendChild(selectWrap);
-    row.appendChild(setButton);
-    row.appendChild(undoButton);
-    row.appendChild(status);
-
-    container.appendChild(row);
-  });
-}
-
-socket.on("INIT", (data) => {
-  renderAdmin(data);
-});
-
-socket.on("UNDO_WINNER", () => {
-  // no-op; state refresh is handled by current page controls
-});
-
-document.getElementById("exportButton").onclick = async function(){
-  const response = await fetch("/export-final", {
-    method: "GET",
-    headers: {
-      "x-admin": ADMIN_PASSWORD
-    }
-  });
-
-  if (response.status !== 200) {
-    alert("Final CSV is not available until all categories have winners selected.");
+  if (!fs.existsSync("backend/data/categories.csv")) {
+    console.log("No categories.csv found");
     return;
   }
 
-  const blob = await response.blob();
-  const url = window.URL.createObjectURL(blob);
+  fs.createReadStream("backend/data/categories.csv")
+    .pipe(csv())
+    .on("data", (row) => {
+      if (!row.category || !row.nominee) return;
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "oscars-final-leaderboard.csv";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+      const category = row.category.trim().toUpperCase();
+      const nominee = row.nominee.trim();
 
-  window.URL.revokeObjectURL(url);
-};
+      if (!category || !nominee) return;
 
-document.getElementById("resetButton").onclick = async function(){
-  if (!confirm("Reset all scores?")) return;
+      if (!categories[category]) {
+        categories[category] = {
+          nominees: [],
+          points: parseInt(row.points || 1, 10)
+        };
+      }
 
-  const response = await fetch("/reset", {
-    method: "POST",
-    headers: {
-      "x-admin": ADMIN_PASSWORD
+      categories[category].nominees.push(nominee);
+    })
+    .on("end", () => {
+      console.log("Categories loaded:", Object.keys(categories).length);
+      recalcLeaderboard();
+    });
+}
+
+/* -----------------------------
+   FETCH GOOGLE SHEET (WITH REDIRECT)
+------------------------------*/
+
+function fetchGoogleSheet(url = GOOGLE_SHEET_URL) {
+  https
+    .get(
+      url,
+      {
+        headers: { "User-Agent": "Mozilla/5.0" }
+      },
+      (res) => {
+        if (
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location
+        ) {
+          console.log("Following redirect...");
+          return fetchGoogleSheet(res.headers.location);
+        }
+
+        let data = "";
+
+        res.on("data", (chunk) => (data += chunk));
+
+        res.on("end", () => {
+          if (data.trim().startsWith("<")) {
+            console.log("Google returned HTML instead of CSV");
+            return;
+          }
+
+          parseGoogleCSV(data);
+        });
+      }
+    )
+    .on("error", (err) => {
+      console.log("Google fetch failed:", err);
+    });
+}
+
+/* -----------------------------
+   PARSE GOOGLE FORM CSV
+------------------------------*/
+
+function parseGoogleCSV(csvText) {
+  const rows = [];
+
+  Readable.from(csvText)
+    .pipe(csv())
+    .on("data", (row) => rows.push(row))
+    .on("end", () => {
+      if (rows.length === 0) {
+        console.log("No rows found in sheet");
+        return;
+      }
+
+      const headers = Object.keys(rows[0]);
+      console.log("Detected headers:", headers);
+
+      picks = [];
+
+      rows.forEach((row) => {
+        const values = Object.values(row);
+
+        /* Google Forms format
+           0 = Timestamp
+           1 = Name
+           2 = Email
+           3+ = Categories
+        */
+
+        const name = values[1];
+
+        if (!name || !String(name).trim()) return;
+
+        for (let i = 3; i < values.length; i++) {
+          const category = headers[i];
+          const nominee = values[i];
+
+          if (
+            category &&
+            nominee &&
+            String(category).trim() &&
+            String(nominee).trim()
+          ) {
+            picks.push({
+              name: String(name).trim(),
+              category: String(category).trim().toUpperCase(),
+              nominee: String(nominee).trim()
+            });
+          }
+        }
+      });
+
+      console.log("Picks loaded:", picks.length);
+      recalcLeaderboard();
+    });
+}
+
+/* -----------------------------
+   CALCULATE LEADERBOARD
+------------------------------*/
+
+function recalcLeaderboard() {
+  const scores = {};
+
+  picks.forEach((p) => {
+    if (!scores[p.name]) scores[p.name] = 0;
+
+    const winnerValue = winners[p.category];
+    const winnerList = Array.isArray(winnerValue)
+      ? winnerValue
+      : winnerValue
+      ? [winnerValue]
+      : [];
+
+    if (winnerList.includes(p.nominee)) {
+      scores[p.name] += categories[p.category]?.points || 1;
     }
   });
 
-  console.log("Reset response:", response.status);
+  leaderboard = Object.entries(scores)
+    .map(([name, score]) => ({ name, score }))
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 
-  location.reload();
-};
-</script>
+  const started = Object.values(winners).some((v) => {
+    if (Array.isArray(v)) return v.length > 0;
+    return !!v;
+  });
 
-</body>
-</html>
+  const totalCategories = Object.keys(categories).length;
+  const completedCategories = Object.keys(winners).filter((cat) => {
+    const value = winners[cat];
+    if (Array.isArray(value)) return value.length > 0;
+    return !!value;
+  }).length;
+
+  const allCategoriesComplete =
+    totalCategories > 0 && completedCategories === totalCategories;
+
+  io.emit("LEADERBOARD", {
+    data: leaderboard,
+    started,
+    allCategoriesComplete
+  });
+}
+
+/* -----------------------------
+   BUILD FINAL CSV EXPORT
+------------------------------*/
+
+function buildFinalCsv() {
+  const lines = [];
+  lines.push("Rank,Name,Score");
+
+  const sorted = [...leaderboard].sort(
+    (a, b) => b.score - a.score || a.name.localeCompare(b.name)
+  );
+
+  let rank = 1;
+
+  sorted.forEach((row, index) => {
+    if (index > 0 && sorted[index - 1].score > row.score) {
+      rank = index + 1;
+    }
+
+    const safeName = `"${String(row.name || "").replace(/"/g, '""')}"`;
+    lines.push(`${rank},${safeName},${row.score}`);
+  });
+
+  return lines.join("\n");
+}
+
+/* -----------------------------
+   MOST CHOSEN NOMINEE
+------------------------------*/
+
+function mostChosen(category) {
+  const counts = {};
+
+  picks
+    .filter((p) => p.category === category)
+    .forEach((p) => {
+      counts[p.nominee] = (counts[p.nominee] || 0) + 1;
+    });
+
+  let max = 0;
+  let nominee = null;
+
+  for (const n in counts) {
+    if (counts[n] > max) {
+      max = counts[n];
+      nominee = n;
+    }
+  }
+
+  return nominee;
+}
+
+/* -----------------------------
+   ADMIN SET WINNER(S)
+------------------------------*/
+
+app.post("/winner", (req, res) => {
+  if (req.headers["x-admin"] !== ADMIN_PASSWORD) {
+    return res.sendStatus(403);
+  }
+
+  const { category, nominee } = req.body;
+
+  if (!category || nominee === undefined || nominee === null) {
+    return res.status(400).send("Missing category or nominee");
+  }
+
+  const cat = String(category).trim().toUpperCase();
+
+  let selectedNominees = [];
+
+  if (Array.isArray(nominee)) {
+    selectedNominees = nominee
+      .map((n) => String(n).trim())
+      .filter((n) => n);
+  } else {
+    selectedNominees = [String(nominee).trim()].filter((n) => n);
+  }
+
+  selectedNominees = [...new Set(selectedNominees)].slice(0, 2);
+
+  if (selectedNominees.length === 0) {
+    return res.status(400).send("No valid nominee selected");
+  }
+
+  winners[cat] =
+    selectedNominees.length === 1 ? selectedNominees[0] : selectedNominees;
+
+  console.log("Winner selected:", cat, winners[cat]);
+
+  recalcLeaderboard();
+
+  io.emit("WINNER", {
+    category: cat,
+    winner: selectedNominees.join(" / "),
+    mostChosen: mostChosen(cat)
+  });
+
+  res.sendStatus(200);
+});
+
+/* -----------------------------
+   ADMIN UNDO SINGLE CATEGORY
+------------------------------*/
+
+app.post("/undo-winner", (req, res) => {
+  if (req.headers["x-admin"] !== ADMIN_PASSWORD) {
+    return res.sendStatus(403);
+  }
+
+  const { category } = req.body;
+
+  if (!category) {
+    return res.status(400).send("Missing category");
+  }
+
+  const cat = String(category).trim().toUpperCase();
+
+  delete winners[cat];
+
+  console.log("Winner removed:", cat);
+
+  recalcLeaderboard();
+
+  io.emit("UNDO_WINNER", {
+    category: cat
+  });
+
+  res.sendStatus(200);
+});
+
+app.post("/reset", (req, res) => {
+  if (req.headers["x-admin"] !== ADMIN_PASSWORD) {
+    return res.sendStatus(403);
+  }
+
+  console.log("Scores reset");
+
+  winners = {};
+  leaderboard = [];
+
+  io.emit("RESET");
+  recalcLeaderboard();
+
+  res.sendStatus(200);
+});
+
+/* -----------------------------
+   EXPORT FINAL CSV
+------------------------------*/
+
+app.get("/export-final", (req, res) => {
+  if (req.headers["x-admin"] !== ADMIN_PASSWORD) {
+    return res.sendStatus(403);
+  }
+
+  const totalCategories = Object.keys(categories).length;
+  const selectedCategories = Object.keys(winners).filter((cat) => {
+    const value = winners[cat];
+    if (Array.isArray(value)) return value.length > 0;
+    return !!value;
+  }).length;
+
+  if (totalCategories === 0 || selectedCategories < totalCategories) {
+    return res
+      .status(400)
+      .send("Final category has not been selected yet.");
+  }
+
+  const csvText = buildFinalCsv();
+
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader(
+    "Content-Disposition",
+    'attachment; filename="oscars-final-leaderboard.csv"'
+  );
+  res.send(csvText);
+});
+
+/* -----------------------------
+   SOCKET CONNECTION
+------------------------------*/
+
+io.on("connection", (socket) => {
+  const totalCategories = Object.keys(categories).length;
+  const completedCategories = Object.keys(winners).filter((cat) => {
+    const value = winners[cat];
+    if (Array.isArray(value)) return value.length > 0;
+    return !!value;
+  }).length;
+
+  const allCategoriesComplete =
+    totalCategories > 0 && completedCategories === totalCategories;
+
+  socket.emit("INIT", {
+    categories,
+    leaderboard,
+    winners,
+    allCategoriesComplete
+  });
+});
+
+/* -----------------------------
+   START SERVER
+------------------------------*/
+
+loadCategories();
+fetchGoogleSheet();
+
+/* refresh picks every 30 seconds */
+setInterval(fetchGoogleSheet, 30000);
+
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
