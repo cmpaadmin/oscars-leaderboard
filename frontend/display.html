@@ -192,36 +192,40 @@
 
       if (!box || !category || !winnerTitle || !winner || !mostTitle || !most) return;
 
-      category.style.fontSize = "72px";
-      winnerTitle.style.fontSize = "42px";
-      mostTitle.style.fontSize = "42px";
-      winner.style.fontSize = "96px";
-      most.style.fontSize = "96px";
+      category.style.maxWidth = "92%";
+      winnerTitle.style.maxWidth = "92%";
+      winner.style.maxWidth = "92%";
+      mostTitle.style.maxWidth = "92%";
+      most.style.maxWidth = "92%";
 
-      const maxHeight = box.clientHeight * 0.88;
-      const maxWidth = box.clientWidth * 0.92;
+      category.style.lineHeight = "1.05";
+      winner.style.lineHeight = "1.05";
+      most.style.lineHeight = "1.05";
 
-      category.style.maxWidth = maxWidth + "px";
-      winnerTitle.style.maxWidth = maxWidth + "px";
-      winner.style.maxWidth = maxWidth + "px";
-      mostTitle.style.maxWidth = maxWidth + "px";
-      most.style.maxWidth = maxWidth + "px";
+      category.style.fontSize = "38px";
+      winnerTitle.style.fontSize = "24px";
+      mostTitle.style.fontSize = "24px";
+      winner.style.fontSize = "40px";
+      most.style.fontSize = "40px";
 
+      const maxHeight = box.clientHeight * 0.9;
       let guard = 0;
 
-      while (box.scrollHeight > maxHeight && guard < 200) {
-        const c = parseFloat(window.getComputedStyle(category).fontSize);
-        const wt = parseFloat(window.getComputedStyle(winnerTitle).fontSize);
-        const w = parseFloat(window.getComputedStyle(winner).fontSize);
-        const mt = parseFloat(window.getComputedStyle(mostTitle).fontSize);
-        const m = parseFloat(window.getComputedStyle(most).fontSize);
+      while (box.scrollHeight < maxHeight && guard < 200) {
+        category.style.fontSize = (parseFloat(category.style.fontSize) + 2) + "px";
+        winnerTitle.style.fontSize = (parseFloat(winnerTitle.style.fontSize) + 1) + "px";
+        mostTitle.style.fontSize = (parseFloat(mostTitle.style.fontSize) + 1) + "px";
+        winner.style.fontSize = (parseFloat(winner.style.fontSize) + 3) + "px";
+        most.style.fontSize = (parseFloat(most.style.fontSize) + 3) + "px";
+        guard++;
+      }
 
-        category.style.fontSize = Math.max(24, c - 2) + "px";
-        winnerTitle.style.fontSize = Math.max(18, wt - 1) + "px";
-        mostTitle.style.fontSize = Math.max(18, mt - 1) + "px";
-        winner.style.fontSize = Math.max(26, w - 2) + "px";
-        most.style.fontSize = Math.max(26, m - 2) + "px";
-
+      while (box.scrollHeight > maxHeight && guard < 400) {
+        category.style.fontSize = Math.max(24, parseFloat(category.style.fontSize) - 1) + "px";
+        winnerTitle.style.fontSize = Math.max(18, parseFloat(winnerTitle.style.fontSize) - 1) + "px";
+        mostTitle.style.fontSize = Math.max(18, parseFloat(mostTitle.style.fontSize) - 1) + "px";
+        winner.style.fontSize = Math.max(26, parseFloat(winner.style.fontSize) - 1) + "px";
+        most.style.fontSize = Math.max(26, parseFloat(most.style.fontSize) - 1) + "px";
         guard++;
       }
     }
