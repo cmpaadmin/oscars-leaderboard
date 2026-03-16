@@ -171,7 +171,14 @@
       if (!overlay) return;
 
       document.getElementById("overlayCategory").textContent = data?.category || "";
-      document.getElementById("overlayWinner").textContent = data?.winner || "";
+
+      const winnerBox = document.getElementById("overlayWinner");
+      const winners = Array.isArray(data?.winners)
+        ? data.winners
+        : [data?.winner].filter(Boolean);
+
+      winnerBox.innerHTML = winners.map(name => `<div>${name}</div>`).join("");
+
       document.getElementById("overlayMost").textContent = data?.mostChosen || "N/A";
 
       overlay.style.display = "block";
