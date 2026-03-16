@@ -10,28 +10,30 @@ background:black;
 color:gold;
 font-family:Arial;
 text-align:center;
-margin:0;
-padding:20px;
 }
 
 h1{
 margin-top:30px;
 }
 
-#resetButton{
+#resetButton,
+#exportButton{
 margin-top:10px;
 padding:8px 16px;
 font-size:16px;
 cursor:pointer;
 }
 
+#exportButton{
+margin-left:10px;
+display:none;
+}
+
 #categories{
 margin-top:40px;
-width:90%;
-max-width:1200px;
+width:80%;
 margin-left:auto;
 margin-right:auto;
-padding-bottom:40px;
 }
 
 .row{
@@ -40,18 +42,16 @@ justify-content:center;
 align-items:center;
 margin-bottom:15px;
 gap:10px;
-flex-wrap:wrap;
 }
 
 .row span{
-min-width:260px;
+min-width:220px;
 text-align:right;
 }
 
 .row select{
 padding:8px;
 font-size:16px;
-min-width:260px;
 }
 
 .row button{
@@ -67,12 +67,12 @@ border-radius:6px;
 }
 </style>
 </head>
-
 <body>
 
 <h1>Admin Control Panel</h1>
 
 <button id="resetButton">Reset Scores</button>
+<button id="exportButton">Export Final CSV</button>
 
 <div id="categories"></div>
 
@@ -82,16 +82,22 @@ border-radius:6px;
 const socket = io();
 const ADMIN_PASSWORD = "f1!msk00lF$U";
 
-socket.on("INIT",(data)=>{
+function updateExportButton(show){
+  const btn = document.getElementById("exportButton");
+  if (!btn) return;
+  btn.style.display = show ? "inline-block" : "none";
+}
 
+socket.on("INIT",(data)=>{
   const container = document.getElementById("categories");
   container.innerHTML = "";
 
   const categories = data.categories || {};
   const winners = data.winners || {};
 
-  Object.keys(categories).forEach(category=>{
+  updateExportButton(!!data.allCategoriesComplete);
 
+  Object.keys(categories).forEach(category=>{
     const row = document.createElement("div");
     row.className = "row";
 
@@ -101,27 +107,29 @@ socket.on("INIT",(data)=>{
     const select = document.createElement("select");
 
     categories[category].nominees.forEach(nominee=>{
-
       const option = document.createElement("option");
       option.value = nominee;
       option.innerText = nominee;
-      select.appendChild(option);
 
+      const savedWinner = winners[category];
+      if (
+        savedWinner === nominee ||
+        (Array.isArray(savedWinner) && savedWinner.includes(nominee))
+      ) {
+        option.selected = true;
+      }
+
+      select.appendChild(option);
     });
 
     const button = document.createElement("button");
-    button.innerText = "Set Winner";
+    button.innerText = winners[category] ? "Winner Selected" : "Set Winner";
 
-    const savedWinner = winners[category];
-
-    if(savedWinner){
-      select.value = savedWinner;
-      button.innerText = "Winner Selected";
+    if (winners[category]) {
       row.classList.add("completed");
     }
 
     button.onclick = async function(){
-
       const response = await fetch("/winner",{
         method:"POST",
         headers:{
@@ -137,16 +145,9 @@ socket.on("INIT",(data)=>{
       console.log("Winner sent:",category,select.value);
       console.log("Server response:",response.status);
 
-      if(response.status === 200){
-        button.innerText = "Winner Selected";
+      if(response.status===200){
+        button.innerText="Winner Selected";
         row.classList.add("completed");
-      }
-
-    };
-
-    select.onchange = function(){
-      if(winners[category] !== select.value){
-        button.innerText = winners[category] ? "Change Winner" : "Set Winner";
       }
     };
 
@@ -155,13 +156,40 @@ socket.on("INIT",(data)=>{
     row.appendChild(button);
 
     container.appendChild(row);
-
   });
-
 });
 
-document.getElementById("resetButton").onclick = async function(){
+socket.on("LEADERBOARD", (payload) => {
+  updateExportButton(!!payload.allCategoriesComplete);
+});
 
+document.getElementById("exportButton").onclick = async function(){
+  const response = await fetch("/export-final", {
+    method: "GET",
+    headers: {
+      "x-admin": ADMIN_PASSWORD
+    }
+  });
+
+  if (response.status !== 200) {
+    alert("Final CSV is not available until all categories have winners selected.");
+    return;
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "oscars-final-leaderboard.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  window.URL.revokeObjectURL(url);
+};
+
+document.getElementById("resetButton").onclick = async function(){
   if(!confirm("Reset all scores?")) return;
 
   const response = await fetch("/reset",{
@@ -174,7 +202,6 @@ document.getElementById("resetButton").onclick = async function(){
   console.log("Reset response:",response.status);
 
   location.reload();
-
 };
 </script>
 
