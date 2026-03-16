@@ -15,6 +15,10 @@
     <div id="winnerTickerTrack"></div>
   </div>
 
+  <div id="leaderboardTicker">
+    <div id="leaderboardTickerTrack"></div>
+  </div>
+
   <div id="leaderboard"></div>
 
   <div id="winnerOverlay">
@@ -41,6 +45,7 @@
     let dotCount = 0;
     let overlayTimer = null;
     let currentWinners = {};
+    let currentLeaderboard = [];
 
     setInterval(() => {
       const dots = document.getElementById("dots");
@@ -62,11 +67,14 @@
         }
       });
 
+      currentLeaderboard = Array.isArray(payload.leaderboard) ? payload.leaderboard : [];
+
       renderWinnerTicker();
+      renderLeaderboardTicker(currentLeaderboard);
 
       const started = Object.keys(currentWinners).length > 0;
       if (started) {
-        renderLeaderboard(payload.leaderboard || []);
+        renderLeaderboard(currentLeaderboard);
       } else {
         showTabulating();
       }
@@ -75,12 +83,15 @@
     socket.on("LEADERBOARD", (payload) => {
       if (!payload) return;
 
+      currentLeaderboard = Array.isArray(payload.data) ? payload.data : [];
+      renderLeaderboardTicker(currentLeaderboard);
+
       if (!payload.started) {
         showTabulating();
         return;
       }
 
-      renderLeaderboard(payload.data || []);
+      renderLeaderboard(currentLeaderboard);
     });
 
     socket.on("WINNER", (data) => {
@@ -98,7 +109,10 @@
 
     socket.on("RESET", () => {
       currentWinners = {};
+      currentLeaderboard = [];
+
       renderWinnerTicker();
+      renderLeaderboardTicker([]);
 
       showTabulating();
       const div = document.getElementById("leaderboard");
@@ -220,6 +234,33 @@
           <div class="ticker-item">
             <div class="ticker-category">${category}</div>
             ${winnerHtml}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderLeaderboardTicker(data) {
+      const ticker = document.getElementById("leaderboardTicker");
+      const track = document.getElementById("leaderboardTickerTrack");
+      if (!ticker || !track) return;
+
+      if (!data || data.length === 0) {
+        track.innerHTML = "";
+        ticker.style.display = "none";
+        return;
+      }
+
+      ticker.style.display = "block";
+
+      track.innerHTML = data.map((player, index) => {
+        const name = player?.name || "";
+        const score = Number(player?.score) || 0;
+
+        return `
+          <div class="leaderboard-ticker-item">
+            <div class="leaderboard-ticker-rank">#${index + 1}</div>
+            <div class="leaderboard-ticker-name">${name}</div>
+            <div class="leaderboard-ticker-score">${score}</div>
           </div>
         `;
       }).join("");
