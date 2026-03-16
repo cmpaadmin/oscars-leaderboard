@@ -70,12 +70,14 @@
       currentLeaderboard = Array.isArray(payload.leaderboard) ? payload.leaderboard : [];
 
       renderWinnerTicker();
-      renderLeaderboardTicker(currentLeaderboard);
 
       const started = Object.keys(currentWinners).length > 0;
+
       if (started) {
+        renderLeaderboardTicker(currentLeaderboard);
         renderLeaderboard(currentLeaderboard);
       } else {
+        renderLeaderboardTicker([], false);
         showTabulating();
       }
     });
@@ -84,7 +86,7 @@
       if (!payload) return;
 
       currentLeaderboard = Array.isArray(payload.data) ? payload.data : [];
-      renderLeaderboardTicker(currentLeaderboard);
+      renderLeaderboardTicker(currentLeaderboard, payload.started);
 
       if (!payload.started) {
         showTabulating();
@@ -112,7 +114,7 @@
       currentLeaderboard = [];
 
       renderWinnerTicker();
-      renderLeaderboardTicker([]);
+      renderLeaderboardTicker([], false);
 
       showTabulating();
       const div = document.getElementById("leaderboard");
@@ -239,12 +241,12 @@
       }).join("");
     }
 
-    function renderLeaderboardTicker(data) {
+    function renderLeaderboardTicker(data, started = true) {
       const ticker = document.getElementById("leaderboardTicker");
       const track = document.getElementById("leaderboardTickerTrack");
       if (!ticker || !track) return;
 
-      if (!data || data.length === 0) {
+      if (!started || !data || data.length === 0) {
         track.innerHTML = "";
         ticker.style.display = "none";
         return;
