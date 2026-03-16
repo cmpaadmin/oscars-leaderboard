@@ -301,8 +301,8 @@ app.post("/winner", (req, res) => {
   recalcLeaderboard();
 
   io.emit("WINNER", {
-    category: cat,
-    winner: selectedNominees.join(" / "),
+    category: selectedNominees.length > 1 ? `${cat} (TIE!)` : cat,
+    winners: selectedNominees,
     mostChosen: mostChosen(cat)
   });
 
