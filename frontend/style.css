@@ -98,7 +98,7 @@ line-height:0.9;
 }
 
 .tie-subline{
-margin-top:6px;
+margin-top:-10px;
 }
 
 
@@ -202,15 +202,13 @@ text-shadow:
 #winnerOverlay{
 
 position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
+top:4in;
+left:4in;
+right:4in;
+bottom:4in;
 
 z-index:2000;
 display:none;
-
-width:calc(100vw - 8in);
-height:calc(100vh - 8in);
 
 }
 
