@@ -171,7 +171,11 @@ function recalcLeaderboard() {
     if (!scores[p.name]) scores[p.name] = 0;
 
     const winnerValue = winners[p.category];
-    const winnerList = Array.isArray(winnerValue) ? winnerValue : [winnerValue];
+    const winnerList = Array.isArray(winnerValue)
+      ? winnerValue
+      : winnerValue
+      ? [winnerValue]
+      : [];
 
     if (winnerList.includes(p.nominee)) {
       scores[p.name] += categories[p.category]?.points || 1;
@@ -193,6 +197,7 @@ function recalcLeaderboard() {
     if (Array.isArray(value)) return value.length > 0;
     return !!value;
   }).length;
+
   const allCategoriesComplete =
     totalCategories > 0 && completedCategories === totalCategories;
 
@@ -256,7 +261,7 @@ function mostChosen(category) {
 }
 
 /* -----------------------------
-   ADMIN SET WINNER
+   ADMIN SET WINNER(S)
 ------------------------------*/
 
 app.post("/winner", (req, res) => {
@@ -266,34 +271,69 @@ app.post("/winner", (req, res) => {
 
   const { category, nominee } = req.body;
 
-  if (!category || !nominee) {
+  if (!category || nominee === undefined || nominee === null) {
     return res.status(400).send("Missing category or nominee");
   }
 
   const cat = String(category).trim().toUpperCase();
 
-  let selectedNominee;
+  let selectedNominees = [];
 
   if (Array.isArray(nominee)) {
-    selectedNominee = nominee
+    selectedNominees = nominee
       .map((n) => String(n).trim())
       .filter((n) => n);
   } else {
-    selectedNominee = String(nominee).trim();
+    selectedNominees = [String(nominee).trim()].filter((n) => n);
   }
 
-  console.log("Winner selected:", cat, selectedNominee);
+  selectedNominees = [...new Set(selectedNominees)].slice(0, 2);
 
-  winners[cat] = selectedNominee;
+  if (selectedNominees.length === 0) {
+    return res.status(400).send("No valid nominee selected");
+  }
+
+  winners[cat] =
+    selectedNominees.length === 1 ? selectedNominees[0] : selectedNominees;
+
+  console.log("Winner selected:", cat, winners[cat]);
 
   recalcLeaderboard();
 
   io.emit("WINNER", {
     category: cat,
-    winner: Array.isArray(selectedNominee)
-      ? selectedNominee.join(" / ")
-      : selectedNominee,
+    winner: selectedNominees.join(" / "),
     mostChosen: mostChosen(cat)
+  });
+
+  res.sendStatus(200);
+});
+
+/* -----------------------------
+   ADMIN UNDO SINGLE CATEGORY
+------------------------------*/
+
+app.post("/undo-winner", (req, res) => {
+  if (req.headers["x-admin"] !== ADMIN_PASSWORD) {
+    return res.sendStatus(403);
+  }
+
+  const { category } = req.body;
+
+  if (!category) {
+    return res.status(400).send("Missing category");
+  }
+
+  const cat = String(category).trim().toUpperCase();
+
+  delete winners[cat];
+
+  console.log("Winner removed:", cat);
+
+  recalcLeaderboard();
+
+  io.emit("UNDO_WINNER", {
+    category: cat
   });
 
   res.sendStatus(200);
@@ -358,6 +398,7 @@ io.on("connection", (socket) => {
     if (Array.isArray(value)) return value.length > 0;
     return !!value;
   }).length;
+
   const allCategoriesComplete =
     totalCategories > 0 && completedCategories === totalCategories;
 
