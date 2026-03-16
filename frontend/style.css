@@ -27,7 +27,7 @@ margin:0;
 
 position:absolute;
 top:53%;
-left:50%;
+left:58%;
 transform:translate(-50%,-50%);
 
 font-size:54px;
@@ -45,6 +45,73 @@ text-shadow:
 
 
 /* ------------------------------------------------ */
+/* LEFT WINNERS TICKER */
+/* ------------------------------------------------ */
+
+#winnerTicker{
+position:absolute;
+top:6%;
+left:2%;
+width:22%;
+height:88%;
+overflow:hidden;
+
+background:rgba(0,0,0,0.55);
+border:2px solid rgba(212,175,55,0.8);
+border-radius:18px;
+box-shadow:
+0 0 14px rgba(255,215,0,0.25),
+inset 0 0 12px rgba(255,215,0,0.12);
+}
+
+#winnerTickerTrack{
+display:flex;
+flex-direction:column;
+align-items:center;
+padding:24px 16px;
+animation:tickerScroll 35s linear infinite;
+}
+
+.ticker-item{
+width:100%;
+margin-bottom:26px;
+}
+
+.ticker-category{
+font-size:24px;
+font-weight:bold;
+text-decoration:underline;
+margin-bottom:8px;
+color:#d4af37;
+
+text-shadow:
+0 0 6px rgba(255,215,0,0.8),
+0 0 12px rgba(255,215,0,0.4);
+}
+
+.ticker-winner{
+font-size:22px;
+line-height:1.2;
+margin:2px 0;
+color:#ffd700;
+
+text-shadow:
+0 0 6px rgba(255,215,0,0.65),
+0 0 12px rgba(255,215,0,0.35);
+}
+
+@keyframes tickerScroll{
+0%{
+transform:translateY(0);
+}
+100%{
+transform:translateY(-50%);
+}
+}
+
+
+
+/* ------------------------------------------------ */
 /* LEADERBOARD */
 /* ------------------------------------------------ */
 
@@ -52,7 +119,7 @@ text-shadow:
 
 position:absolute;
 top:55%;
-left:50%;
+left:62%;
 transform:translate(-50%,-50%);
 
 font-size:50px;
