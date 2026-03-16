@@ -117,6 +117,96 @@ word-break:break-word;
 overflow-wrap:break-word;
 }
 
+
+
+/* ------------------------------------------------ */
+/* RIGHT LEADERBOARD TICKER */
+/* ------------------------------------------------ */
+
+#leaderboardTicker{
+--ticker-width:320px;
+
+position:absolute;
+top:50%;
+right:2%;
+transform:translateY(-50%);
+
+width:var(--ticker-width);
+height:60vh;
+max-height:75vh;
+overflow:hidden;
+
+background:rgba(0,0,0,0.55);
+border:2px solid rgba(212,175,55,0.8);
+border-radius:18px;
+box-shadow:
+0 0 14px rgba(255,215,0,0.25),
+inset 0 0 12px rgba(255,215,0,0.12);
+
+padding:0 14px;
+box-sizing:border-box;
+}
+
+#leaderboardTickerTrack{
+display:flex;
+flex-direction:column;
+align-items:stretch;
+padding:24px 10px;
+animation:tickerScroll 35s linear infinite;
+box-sizing:border-box;
+}
+
+.leaderboard-ticker-item{
+display:grid;
+grid-template-columns:auto 1fr auto;
+column-gap:10px;
+align-items:center;
+
+width:100%;
+max-width:100%;
+margin-bottom:14px;
+box-sizing:border-box;
+}
+
+.leaderboard-ticker-rank{
+font-size:clamp(15px, 1.25vw, 21px);
+font-weight:bold;
+color:#d4af37;
+text-align:right;
+white-space:nowrap;
+
+text-shadow:
+0 0 6px rgba(255,215,0,0.8),
+0 0 12px rgba(255,215,0,0.4);
+}
+
+.leaderboard-ticker-name{
+font-size:clamp(15px, 1.35vw, 22px);
+font-weight:bold;
+line-height:1.15;
+color:#ffd700;
+text-align:left;
+
+word-break:break-word;
+overflow-wrap:break-word;
+
+text-shadow:
+0 0 6px rgba(255,215,0,0.65),
+0 0 12px rgba(255,215,0,0.35);
+}
+
+.leaderboard-ticker-score{
+font-size:clamp(15px, 1.25vw, 21px);
+font-weight:bold;
+color:#d4af37;
+text-align:right;
+white-space:nowrap;
+
+text-shadow:
+0 0 6px rgba(255,215,0,0.8),
+0 0 12px rgba(255,215,0,0.4);
+}
+
 @keyframes tickerScroll{
 0%{
 transform:translateY(0);
