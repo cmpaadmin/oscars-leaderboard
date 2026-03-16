@@ -12,11 +12,17 @@
   </div>
 
   <div id="winnerTicker">
-    <div id="winnerTickerTrack"></div>
+    <div class="ticker-header">Tonight's Winners</div>
+    <div class="ticker-window">
+      <div id="winnerTickerTrack"></div>
+    </div>
   </div>
 
   <div id="leaderboardTicker">
-    <div id="leaderboardTickerTrack"></div>
+    <div class="ticker-header">Full Leaderboard</div>
+    <div class="ticker-window">
+      <div id="leaderboardTickerTrack"></div>
+    </div>
   </div>
 
   <div id="leaderboard"></div>
@@ -211,6 +217,34 @@
       });
     }
 
+    function setupScrollingTrack(track, html, itemCount) {
+      if (!track) return;
+
+      track.classList.remove("scrolling");
+      track.innerHTML = "";
+
+      if (!html || itemCount === 0) return;
+
+      track.innerHTML = html;
+
+      requestAnimationFrame(() => {
+        const parentHeight = track.parentElement.clientHeight;
+        const contentHeight = track.scrollHeight;
+
+        if (contentHeight > parentHeight) {
+          track.innerHTML = html + html;
+          const duplicatedHeight = track.scrollHeight / 2;
+          const duration = Math.max(18, duplicatedHeight / 28);
+          track.style.setProperty("--scroll-distance", `${duplicatedHeight}px`);
+          track.style.setProperty("--scroll-duration", `${duration}s`);
+          track.classList.add("scrolling");
+        } else {
+          track.style.removeProperty("--scroll-distance");
+          track.style.removeProperty("--scroll-duration");
+        }
+      });
+    }
+
     function renderWinnerTicker() {
       const ticker = document.getElementById("winnerTicker");
       const track = document.getElementById("winnerTickerTrack");
@@ -219,6 +253,7 @@
       const categories = Object.keys(currentWinners);
 
       if (categories.length === 0) {
+        track.classList.remove("scrolling");
         track.innerHTML = "";
         ticker.style.display = "none";
         return;
@@ -226,7 +261,7 @@
 
       ticker.style.display = "block";
 
-      track.innerHTML = categories.map((category) => {
+      const html = categories.map((category) => {
         const winnerList = currentWinners[category] || [];
         const winnerHtml = winnerList
           .map(name => `<div class="ticker-winner">${name}</div>`)
@@ -239,6 +274,8 @@
           </div>
         `;
       }).join("");
+
+      setupScrollingTrack(track, html, categories.length);
     }
 
     function renderLeaderboardTicker(data, started = true) {
@@ -247,6 +284,7 @@
       if (!ticker || !track) return;
 
       if (!started || !data || data.length === 0) {
+        track.classList.remove("scrolling");
         track.innerHTML = "";
         ticker.style.display = "none";
         return;
@@ -254,7 +292,7 @@
 
       ticker.style.display = "block";
 
-      track.innerHTML = data.map((player, index) => {
+      const html = data.map((player, index) => {
         const name = player?.name || "";
         const score = Number(player?.score) || 0;
 
@@ -266,6 +304,8 @@
           </div>
         `;
       }).join("");
+
+      setupScrollingTrack(track, html, data.length);
     }
 
     function showOverlay(data) {
