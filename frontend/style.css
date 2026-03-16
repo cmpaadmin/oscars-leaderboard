@@ -57,7 +57,7 @@ left:2%;
 transform:translateY(-50%);
 
 width:var(--ticker-width);
-height:75vh;
+height:60vh;
 max-height:75vh;
 overflow:hidden;
 
