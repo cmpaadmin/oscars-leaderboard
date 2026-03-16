@@ -170,21 +170,63 @@ function recalcLeaderboard() {
   picks.forEach((p) => {
     if (!scores[p.name]) scores[p.name] = 0;
 
-    if (winners[p.category] === p.nominee) {
+    const winnerValue = winners[p.category];
+    const winnerList = Array.isArray(winnerValue) ? winnerValue : [winnerValue];
+
+    if (winnerList.includes(p.nominee)) {
       scores[p.name] += categories[p.category]?.points || 1;
     }
   });
 
   leaderboard = Object.entries(scores)
     .map(([name, score]) => ({ name, score }))
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 
-  const started = Object.values(winners).some((v) => !!v);
+  const started = Object.values(winners).some((v) => {
+    if (Array.isArray(v)) return v.length > 0;
+    return !!v;
+  });
+
+  const totalCategories = Object.keys(categories).length;
+  const completedCategories = Object.keys(winners).filter((cat) => {
+    const value = winners[cat];
+    if (Array.isArray(value)) return value.length > 0;
+    return !!value;
+  }).length;
+  const allCategoriesComplete =
+    totalCategories > 0 && completedCategories === totalCategories;
 
   io.emit("LEADERBOARD", {
     data: leaderboard,
-    started
+    started,
+    allCategoriesComplete
   });
+}
+
+/* -----------------------------
+   BUILD FINAL CSV EXPORT
+------------------------------*/
+
+function buildFinalCsv() {
+  const lines = [];
+  lines.push("Rank,Name,Score");
+
+  const sorted = [...leaderboard].sort(
+    (a, b) => b.score - a.score || a.name.localeCompare(b.name)
+  );
+
+  let rank = 1;
+
+  sorted.forEach((row, index) => {
+    if (index > 0 && sorted[index - 1].score > row.score) {
+      rank = index + 1;
+    }
+
+    const safeName = `"${String(row.name || "").replace(/"/g, '""')}"`;
+    lines.push(`${rank},${safeName},${row.score}`);
+  });
+
+  return lines.join("\n");
 }
 
 /* -----------------------------
@@ -229,7 +271,16 @@ app.post("/winner", (req, res) => {
   }
 
   const cat = String(category).trim().toUpperCase();
-  const selectedNominee = String(nominee).trim();
+
+  let selectedNominee;
+
+  if (Array.isArray(nominee)) {
+    selectedNominee = nominee
+      .map((n) => String(n).trim())
+      .filter((n) => n);
+  } else {
+    selectedNominee = String(nominee).trim();
+  }
 
   console.log("Winner selected:", cat, selectedNominee);
 
@@ -239,7 +290,9 @@ app.post("/winner", (req, res) => {
 
   io.emit("WINNER", {
     category: cat,
-    winner: selectedNominee,
+    winner: Array.isArray(selectedNominee)
+      ? selectedNominee.join(" / ")
+      : selectedNominee,
     mostChosen: mostChosen(cat)
   });
 
@@ -263,14 +316,56 @@ app.post("/reset", (req, res) => {
 });
 
 /* -----------------------------
+   EXPORT FINAL CSV
+------------------------------*/
+
+app.get("/export-final", (req, res) => {
+  if (req.headers["x-admin"] !== ADMIN_PASSWORD) {
+    return res.sendStatus(403);
+  }
+
+  const totalCategories = Object.keys(categories).length;
+  const selectedCategories = Object.keys(winners).filter((cat) => {
+    const value = winners[cat];
+    if (Array.isArray(value)) return value.length > 0;
+    return !!value;
+  }).length;
+
+  if (totalCategories === 0 || selectedCategories < totalCategories) {
+    return res
+      .status(400)
+      .send("Final category has not been selected yet.");
+  }
+
+  const csvText = buildFinalCsv();
+
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader(
+    "Content-Disposition",
+    'attachment; filename="oscars-final-leaderboard.csv"'
+  );
+  res.send(csvText);
+});
+
+/* -----------------------------
    SOCKET CONNECTION
 ------------------------------*/
 
 io.on("connection", (socket) => {
+  const totalCategories = Object.keys(categories).length;
+  const completedCategories = Object.keys(winners).filter((cat) => {
+    const value = winners[cat];
+    if (Array.isArray(value)) return value.length > 0;
+    return !!value;
+  }).length;
+  const allCategoriesComplete =
+    totalCategories > 0 && completedCategories === totalCategories;
+
   socket.emit("INIT", {
     categories,
     leaderboard,
-    winners
+    winners,
+    allCategoriesComplete
   });
 });
 
