@@ -18,14 +18,14 @@
     </div>
   </div>
 
+  <div id="leaderboard"></div>
+
   <div id="leaderboardTicker">
     <div class="ticker-header">Full Leaderboard</div>
     <div class="ticker-window">
       <div id="leaderboardTickerTrack"></div>
     </div>
   </div>
-
-  <div id="leaderboard"></div>
 
   <div id="winnerOverlay">
     <div class="overlay-content" id="overlayContent">
@@ -52,6 +52,8 @@
     let overlayTimer = null;
     let currentWinners = {};
     let currentLeaderboard = [];
+    let lastLeaderName = null;
+    let lastLeaderScore = null;
 
     setInterval(() => {
       const dots = document.getElementById("dots");
@@ -64,6 +66,7 @@
       if (!payload) return;
 
       currentWinners = {};
+      currentLeaderboard = payload.leaderboard || [];
 
       Object.entries(payload.winners || {}).forEach(([category, value]) => {
         if (Array.isArray(value)) {
@@ -73,17 +76,14 @@
         }
       });
 
-      currentLeaderboard = Array.isArray(payload.leaderboard) ? payload.leaderboard : [];
-
       renderWinnerTicker();
 
       const started = Object.keys(currentWinners).length > 0;
+      renderLeaderboardTicker(currentLeaderboard, started);
 
       if (started) {
-        renderLeaderboardTicker(currentLeaderboard);
         renderLeaderboard(currentLeaderboard);
       } else {
-        renderLeaderboardTicker([], false);
         showTabulating();
       }
     });
@@ -91,15 +91,16 @@
     socket.on("LEADERBOARD", (payload) => {
       if (!payload) return;
 
-      currentLeaderboard = Array.isArray(payload.data) ? payload.data : [];
-      renderLeaderboardTicker(currentLeaderboard, payload.started);
+      currentLeaderboard = payload.data || [];
 
       if (!payload.started) {
+        renderLeaderboardTicker([], false);
         showTabulating();
         return;
       }
 
       renderLeaderboard(currentLeaderboard);
+      renderLeaderboardTicker(currentLeaderboard, true);
     });
 
     socket.on("WINNER", (data) => {
@@ -115,9 +116,19 @@
       launchConfetti();
     });
 
+    socket.on("UNDO_WINNER", (data) => {
+      if (data?.category) {
+        const cleanCategory = String(data.category).replace(/\s+\(TIE!\)$/, "");
+        delete currentWinners[cleanCategory];
+        renderWinnerTicker();
+      }
+    });
+
     socket.on("RESET", () => {
       currentWinners = {};
       currentLeaderboard = [];
+      lastLeaderName = null;
+      lastLeaderScore = null;
 
       renderWinnerTicker();
       renderLeaderboardTicker([], false);
@@ -164,6 +175,19 @@
         .map(Number)
         .sort((a, b) => b - a);
 
+      const currentTopScore = scores.length > 0 ? scores[0] : null;
+      const currentTopNames = currentTopScore !== null ? grouped[currentTopScore] || [] : [];
+      const leaderSignature = `${currentTopScore}|${[...currentTopNames].sort().join("|")}`;
+      const previousLeaderSignature = `${lastLeaderScore}|${lastLeaderName || ""}`;
+      const shouldAnimateLeader = leaderSignature !== previousLeaderSignature;
+
+      if (currentTopNames.length === 1) {
+        lastLeaderName = currentTopNames[0];
+      } else {
+        lastLeaderName = [...currentTopNames].sort().join("|");
+      }
+      lastLeaderScore = currentTopScore;
+
       let rank = 1;
       let visibleLines = 0;
       const maxLines = 5;
@@ -173,7 +197,8 @@
 
         const players = grouped[score];
         const currentRank = rank;
-        const leaderClass = currentRank === 1 ? "entry leader" : "entry";
+        const leaderClass =
+          currentRank === 1 && shouldAnimateLeader ? "entry leader" : "entry";
 
         if (players.length > 3) {
           if (visibleLines < maxLines) {
@@ -217,34 +242,6 @@
       });
     }
 
-    function setupScrollingTrack(track, html, itemCount) {
-      if (!track) return;
-
-      track.classList.remove("scrolling");
-      track.innerHTML = "";
-
-      if (!html || itemCount === 0) return;
-
-      track.innerHTML = html;
-
-      requestAnimationFrame(() => {
-        const parentHeight = track.parentElement.clientHeight;
-        const contentHeight = track.scrollHeight;
-
-        if (contentHeight > parentHeight) {
-          track.innerHTML = html + html;
-          const duplicatedHeight = track.scrollHeight / 2;
-          const duration = Math.max(18, duplicatedHeight / 28);
-          track.style.setProperty("--scroll-distance", `${duplicatedHeight}px`);
-          track.style.setProperty("--scroll-duration", `${duration}s`);
-          track.classList.add("scrolling");
-        } else {
-          track.style.removeProperty("--scroll-distance");
-          track.style.removeProperty("--scroll-duration");
-        }
-      });
-    }
-
     function renderWinnerTicker() {
       const ticker = document.getElementById("winnerTicker");
       const track = document.getElementById("winnerTickerTrack");
@@ -253,7 +250,6 @@
       const categories = Object.keys(currentWinners);
 
       if (categories.length === 0) {
-        track.classList.remove("scrolling");
         track.innerHTML = "";
         ticker.style.display = "none";
         return;
@@ -261,7 +257,7 @@
 
       ticker.style.display = "block";
 
-      const html = categories.map((category) => {
+      track.innerHTML = categories.map((category) => {
         const winnerList = currentWinners[category] || [];
         const winnerHtml = winnerList
           .map(name => `<div class="ticker-winner">${name}</div>`)
@@ -274,17 +270,14 @@
           </div>
         `;
       }).join("");
-
-      setupScrollingTrack(track, html, categories.length);
     }
 
-    function renderLeaderboardTicker(data, started = true) {
+    function renderLeaderboardTicker(data, started) {
       const ticker = document.getElementById("leaderboardTicker");
       const track = document.getElementById("leaderboardTickerTrack");
       if (!ticker || !track) return;
 
       if (!started || !data || data.length === 0) {
-        track.classList.remove("scrolling");
         track.innerHTML = "";
         ticker.style.display = "none";
         return;
@@ -292,20 +285,14 @@
 
       ticker.style.display = "block";
 
-      const html = data.map((player, index) => {
-        const name = player?.name || "";
-        const score = Number(player?.score) || 0;
-
+      track.innerHTML = data.map((player, index) => {
         return `
-          <div class="leaderboard-ticker-item">
-            <div class="leaderboard-ticker-rank">#${index + 1}</div>
-            <div class="leaderboard-ticker-name">${name}</div>
-            <div class="leaderboard-ticker-score">${score}</div>
+          <div class="ticker-item">
+            <div class="ticker-category">#${index + 1} ${player.name}</div>
+            <div class="ticker-winner">${player.score} point${player.score === 1 ? "" : "s"}</div>
           </div>
         `;
       }).join("");
-
-      setupScrollingTrack(track, html, data.length);
     }
 
     function showOverlay(data) {
