@@ -68,18 +68,107 @@ box-shadow:
 0 0 14px rgba(255,215,0,0.25),
 inset 0 0 12px rgba(255,215,0,0.12);
 
+box-sizing:border-box;
+display:none;
+}
+
+
+
+/* ------------------------------------------------ */
+/* RIGHT LEADERBOARD TICKER */
+/* ------------------------------------------------ */
+
+#leaderboardTicker{
+--ticker-width:320px;
+
+position:absolute;
+top:50%;
+right:2%;
+transform:translateY(-50%);
+
+width:var(--ticker-width);
+height:60vh;
+max-height:75vh;
+overflow:hidden;
+
+background:rgba(0,0,0,0.55);
+border:2px solid rgba(212,175,55,0.8);
+border-radius:18px;
+box-shadow:
+0 0 14px rgba(255,215,0,0.25),
+inset 0 0 12px rgba(255,215,0,0.12);
+
+box-sizing:border-box;
+display:none;
+}
+
+
+
+/* ------------------------------------------------ */
+/* TICKER HEADER + WINDOW */
+/* ------------------------------------------------ */
+
+.ticker-header{
+height:54px;
+display:flex;
+align-items:center;
+justify-content:center;
+
+font-size:clamp(16px, 1.35vw, 22px);
+font-weight:bold;
+color:#d4af37;
+
+border-bottom:2px solid rgba(212,175,55,0.5);
+
+text-shadow:
+0 0 6px rgba(255,215,0,0.8),
+0 0 12px rgba(255,215,0,0.4);
+
+padding:0 10px;
+box-sizing:border-box;
+}
+
+.ticker-window{
+height:calc(100% - 54px);
+overflow:hidden;
+position:relative;
 padding:0 14px;
 box-sizing:border-box;
 }
 
-#winnerTickerTrack{
+#winnerTickerTrack,
+#leaderboardTickerTrack{
 display:flex;
 flex-direction:column;
 align-items:center;
 padding:24px 10px;
-animation:tickerScroll 60s linear infinite;
 box-sizing:border-box;
+will-change:transform;
 }
+
+#leaderboardTickerTrack{
+align-items:stretch;
+}
+
+#winnerTickerTrack.scrolling,
+#leaderboardTickerTrack.scrolling{
+animation:tickerScrollVar var(--scroll-duration) linear infinite;
+}
+
+@keyframes tickerScrollVar{
+0%{
+transform:translateY(0);
+}
+100%{
+transform:translateY(calc(-1 * var(--scroll-distance)));
+}
+}
+
+
+
+/* ------------------------------------------------ */
+/* LEFT TICKER ITEMS */
+/* ------------------------------------------------ */
 
 .ticker-item{
 width:100%;
@@ -120,41 +209,8 @@ overflow-wrap:break-word;
 
 
 /* ------------------------------------------------ */
-/* RIGHT LEADERBOARD TICKER */
+/* RIGHT TICKER ITEMS */
 /* ------------------------------------------------ */
-
-#leaderboardTicker{
---ticker-width:320px;
-
-position:absolute;
-top:50%;
-right:2%;
-transform:translateY(-50%);
-
-width:var(--ticker-width);
-height:60vh;
-max-height:75vh;
-overflow:hidden;
-
-background:rgba(0,0,0,0.55);
-border:2px solid rgba(212,175,55,0.8);
-border-radius:18px;
-box-shadow:
-0 0 14px rgba(255,215,0,0.25),
-inset 0 0 12px rgba(255,215,0,0.12);
-
-padding:0 14px;
-box-sizing:border-box;
-}
-
-#leaderboardTickerTrack{
-display:flex;
-flex-direction:column;
-align-items:stretch;
-padding:24px 10px;
-animation:tickerScroll 60s linear infinite;
-box-sizing:border-box;
-}
 
 .leaderboard-ticker-item{
 display:grid;
@@ -205,15 +261,6 @@ white-space:nowrap;
 text-shadow:
 0 0 6px rgba(255,215,0,0.8),
 0 0 12px rgba(255,215,0,0.4);
-}
-
-@keyframes tickerScroll{
-0%{
-transform:translateY(0);
-}
-100%{
-transform:translateY(-50%);
-}
 }
 
 
