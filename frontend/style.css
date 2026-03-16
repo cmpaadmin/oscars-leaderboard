@@ -52,11 +52,13 @@ text-shadow:
 --ticker-width:320px;
 
 position:absolute;
-top:6%;
+top:50%;
 left:2%;
+transform:translateY(-50%);
 
 width:var(--ticker-width);
-height:88%;
+height:75vh;
+max-height:75vh;
 overflow:hidden;
 
 background:rgba(0,0,0,0.55);
