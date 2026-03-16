@@ -218,6 +218,19 @@ color:#ffd700;
 overflow:hidden;
 }
 
+#overlayTopGroup,
+#overlayBottomGroup{
+width:100%;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+}
+
+#overlayBottomGroup{
+margin-top:20px;
+}
+
 
 
 /* ------------------------------------------------ */
