@@ -15,13 +15,17 @@
 
   <div id="winnerOverlay">
     <div class="overlay-content" id="overlayContent">
-      <div id="overlayCategory"></div>
+      <div id="overlayTopGroup">
+        <div id="overlayCategory"></div>
 
-      <div class="overlay-section-title" id="winnerTitle">Winner</div>
-      <div id="overlayWinner"></div>
+        <div class="overlay-section-title" id="winnerTitle">Winner</div>
+        <div id="overlayWinner"></div>
+      </div>
 
-      <div class="overlay-section-title" id="mostTitle">Most Chosen</div>
-      <div id="overlayMost"></div>
+      <div id="overlayBottomGroup">
+        <div class="overlay-section-title" id="mostTitle">Most Chosen</div>
+        <div id="overlayMost"></div>
+      </div>
     </div>
   </div>
 
@@ -182,52 +186,74 @@
       }, 10000);
     }
 
+    function fitSection(groupEl, items, maxHeight, minSizes, maxSizes, stepSizes) {
+      items.forEach((item, i) => {
+        item.style.fontSize = minSizes[i] + "px";
+        item.style.maxWidth = "92%";
+        item.style.lineHeight = "1.05";
+      });
+
+      let guard = 0;
+
+      while (groupEl.scrollHeight < maxHeight && guard < 300) {
+        let changed = false;
+
+        items.forEach((item, i) => {
+          const current = parseFloat(item.style.fontSize);
+          if (current < maxSizes[i]) {
+            item.style.fontSize = Math.min(maxSizes[i], current + stepSizes[i]) + "px";
+            changed = true;
+          }
+        });
+
+        if (!changed) break;
+        guard++;
+      }
+
+      while (groupEl.scrollHeight > maxHeight && guard < 600) {
+        items.forEach((item, i) => {
+          const current = parseFloat(item.style.fontSize);
+          item.style.fontSize = Math.max(minSizes[i], current - 1) + "px";
+        });
+        guard++;
+      }
+    }
+
     function fitOverlayText() {
       const box = document.getElementById("overlayContent");
+      const topGroup = document.getElementById("overlayTopGroup");
+      const bottomGroup = document.getElementById("overlayBottomGroup");
+
       const category = document.getElementById("overlayCategory");
       const winnerTitle = document.getElementById("winnerTitle");
       const winner = document.getElementById("overlayWinner");
+
       const mostTitle = document.getElementById("mostTitle");
       const most = document.getElementById("overlayMost");
 
-      if (!box || !category || !winnerTitle || !winner || !mostTitle || !most) return;
+      if (!box || !topGroup || !bottomGroup || !category || !winnerTitle || !winner || !mostTitle || !most) return;
 
-      category.style.maxWidth = "92%";
-      winnerTitle.style.maxWidth = "92%";
-      winner.style.maxWidth = "92%";
-      mostTitle.style.maxWidth = "92%";
-      most.style.maxWidth = "92%";
+      const totalHeight = box.clientHeight;
+      const topMaxHeight = totalHeight * 0.58;
+      const bottomMaxHeight = totalHeight * 0.28;
 
-      category.style.lineHeight = "1.05";
-      winner.style.lineHeight = "1.05";
-      most.style.lineHeight = "1.05";
+      fitSection(
+        topGroup,
+        [category, winnerTitle, winner],
+        topMaxHeight,
+        [36, 24, 40],
+        [90, 54, 130],
+        [2, 1, 3]
+      );
 
-      category.style.fontSize = "38px";
-      winnerTitle.style.fontSize = "24px";
-      mostTitle.style.fontSize = "24px";
-      winner.style.fontSize = "40px";
-      most.style.fontSize = "40px";
-
-      const maxHeight = box.clientHeight * 0.9;
-      let guard = 0;
-
-      while (box.scrollHeight < maxHeight && guard < 200) {
-        category.style.fontSize = (parseFloat(category.style.fontSize) + 2) + "px";
-        winnerTitle.style.fontSize = (parseFloat(winnerTitle.style.fontSize) + 1) + "px";
-        mostTitle.style.fontSize = (parseFloat(mostTitle.style.fontSize) + 1) + "px";
-        winner.style.fontSize = (parseFloat(winner.style.fontSize) + 3) + "px";
-        most.style.fontSize = (parseFloat(most.style.fontSize) + 3) + "px";
-        guard++;
-      }
-
-      while (box.scrollHeight > maxHeight && guard < 400) {
-        category.style.fontSize = Math.max(24, parseFloat(category.style.fontSize) - 1) + "px";
-        winnerTitle.style.fontSize = Math.max(18, parseFloat(winnerTitle.style.fontSize) - 1) + "px";
-        mostTitle.style.fontSize = Math.max(18, parseFloat(mostTitle.style.fontSize) - 1) + "px";
-        winner.style.fontSize = Math.max(26, parseFloat(winner.style.fontSize) - 1) + "px";
-        most.style.fontSize = Math.max(26, parseFloat(most.style.fontSize) - 1) + "px";
-        guard++;
-      }
+      fitSection(
+        bottomGroup,
+        [mostTitle, most],
+        bottomMaxHeight,
+        [24, 34],
+        [54, 110],
+        [1, 3]
+      );
     }
 
     function launchConfetti() {
