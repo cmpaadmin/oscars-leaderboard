@@ -27,7 +27,7 @@ margin:0;
 
 position:absolute;
 top:53%;
-left:58%;
+left:50%;
 transform:translate(-50%,-50%);
 
 font-size:54px;
@@ -52,7 +52,9 @@ text-shadow:
 position:absolute;
 top:6%;
 left:2%;
-width:22%;
+width:auto;
+min-width:220px;
+max-width:30%;
 height:88%;
 overflow:hidden;
 
@@ -62,6 +64,9 @@ border-radius:18px;
 box-shadow:
 0 0 14px rgba(255,215,0,0.25),
 inset 0 0 12px rgba(255,215,0,0.12);
+
+padding:0 14px;
+box-sizing:border-box;
 }
 
 #winnerTickerTrack{
@@ -73,7 +78,8 @@ animation:tickerScroll 35s linear infinite;
 }
 
 .ticker-item{
-width:100%;
+width:max-content;
+max-width:100%;
 margin-bottom:26px;
 }
 
@@ -119,7 +125,7 @@ transform:translateY(-50%);
 
 position:absolute;
 top:55%;
-left:62%;
+left:50%;
 transform:translate(-50%,-50%);
 
 font-size:50px;
