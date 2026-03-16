@@ -89,8 +89,9 @@
 
       const grouped = {};
       data.forEach((player) => {
-        if (!grouped[player.score]) grouped[player.score] = [];
-        grouped[player.score].push(player.name);
+        const score = Number(player.score) || 0;
+        if (!grouped[score]) grouped[score] = [];
+        grouped[score].push(player.name);
       });
 
       const scores = Object.keys(grouped)
@@ -98,39 +99,55 @@
         .sort((a, b) => b - a);
 
       let rank = 1;
+      let visibleLines = 0;
+      const maxLines = 5;
 
       scores.forEach((score) => {
-        const players = grouped[score];
-        if (rank > 5) return;
+        if (visibleLines >= maxLines) return;
 
+        const players = grouped[score];
         const currentRank = rank;
+        const leaderClass = currentRank === 1 ? "entry leader" : "entry";
 
         if (players.length > 3) {
-          const leaderClass = currentRank === 1 ? "entry leader" : "entry";
-          div.innerHTML += `
-            <div class="${leaderClass}">
-              <span class="rank">#${currentRank}</span>
-              <span>${players.length} people tied</span>
-              <span> ${score}</span>
-            </div>
-          `;
-          rank += players.length;
+          if (visibleLines < maxLines) {
+            div.innerHTML += `
+              <div class="${leaderClass}">
+                <span class="rank">#${currentRank}</span>
+                <span>${players.length} people tied</span>
+                <span> ${score}</span>
+              </div>
+            `;
+            visibleLines += 1;
+          }
+        } else if (players.length === 1) {
+          if (visibleLines < maxLines) {
+            div.innerHTML += `
+              <div class="${leaderClass}">
+                <span class="rank">#${currentRank}</span>
+                <span>${players[0]}</span>
+                <span> ${score}</span>
+              </div>
+            `;
+            visibleLines += 1;
+          }
         } else {
-          players.forEach((name) => {
-            if (currentRank <= 5) {
-              const leaderClass = currentRank === 1 ? "entry leader" : "entry";
-              div.innerHTML += `
-                <div class="${leaderClass}">
-                  <span class="rank">#${currentRank}</span>
-                  <span>${name}</span>
-                  <span> ${score}</span>
-                </div>
-              `;
-            }
-          });
+          players.forEach((name, index) => {
+            if (visibleLines >= maxLines) return;
 
-          rank += players.length;
+            div.innerHTML += `
+              <div class="${leaderClass} tie-line ${index > 0 ? "tie-subline" : ""}">
+                <span class="rank">${index === 0 ? "#" + currentRank : ""}</span>
+                <span>${name}</span>
+                <span> ${score}</span>
+              </div>
+            `;
+
+            visibleLines += 1;
+          });
         }
+
+        rank += players.length;
       });
     }
 
