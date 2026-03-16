@@ -286,3 +286,7 @@ max-width:95%;
 word-break:normal;
 overflow-wrap:break-word;
 }
+
+#overlayWinner div{
+margin:6px 0;
+}
