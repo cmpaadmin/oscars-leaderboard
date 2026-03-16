@@ -69,14 +69,13 @@ align-items:center;
 
 .entry{
 
-margin:14px;
+margin:6px 0;
 
 /* visible by default (prevents missing #1 bug) */
 
 opacity:1;
 
 color:#d4af37;
-text-shadow:
 font-weight:bold;
 letter-spacing:1px;
 
@@ -91,9 +90,25 @@ animation:slideUp .6s ease;
 
 
 
+/* tighter spacing for tied rows */
+
+.tie-line{
+margin:1px 0;
+line-height:0.9;
+}
+
+.tie-subline{
+margin-top:-14px;
+}
+
+
+
 /* rank number */
 
 .rank{
+display:inline-block;
+min-width:70px;
+text-align:right;
 margin-right:20px;
 
 color:#d4af37;
@@ -220,6 +235,8 @@ box-shadow:
 0 0 60px rgba(255,215,0,0.4);
 
 color:#ffd700;
+
+max-width:90vw;
 
 }
 
