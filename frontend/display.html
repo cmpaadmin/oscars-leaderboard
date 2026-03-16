@@ -11,6 +11,10 @@
     VOTES ARE BEING TABULATED<span id="dots"></span>
   </div>
 
+  <div id="winnerTicker">
+    <div id="winnerTickerTrack"></div>
+  </div>
+
   <div id="leaderboard"></div>
 
   <div id="winnerOverlay">
@@ -36,6 +40,7 @@
     const socket = io();
     let dotCount = 0;
     let overlayTimer = null;
+    let currentWinners = {};
 
     setInterval(() => {
       const dots = document.getElementById("dots");
@@ -46,6 +51,10 @@
 
     socket.on("INIT", (payload) => {
       if (!payload) return;
+
+      currentWinners = payload.winners || {};
+      renderWinnerTicker();
+
       const started = Object.keys(payload.winners || {}).length > 0;
       if (started) {
         renderLeaderboard(payload.leaderboard || []);
@@ -66,11 +75,22 @@
     });
 
     socket.on("WINNER", (data) => {
+      if (data?.category) {
+        const cleanCategory = String(data.category).replace(/\s+\(TIE!\)$/, "");
+        currentWinners[cleanCategory] = Array.isArray(data.winners)
+          ? data.winners
+          : [data.winner].filter(Boolean);
+        renderWinnerTicker();
+      }
+
       showOverlay(data);
       launchConfetti();
     });
 
     socket.on("RESET", () => {
+      currentWinners = {};
+      renderWinnerTicker();
+
       showTabulating();
       const div = document.getElementById("leaderboard");
       if (div) div.innerHTML = "";
@@ -164,6 +184,33 @@
 
         rank += players.length;
       });
+    }
+
+    function renderWinnerTicker() {
+      const track = document.getElementById("winnerTickerTrack");
+      if (!track) return;
+
+      const categories = Object.keys(currentWinners);
+
+      if (categories.length === 0) {
+        track.innerHTML = "";
+        return;
+      }
+
+      track.innerHTML = categories.map((category) => {
+        const winnerList = currentWinners[category] || [];
+        const winnerHtml = winnerList.map(name => `<div class="ticker-winner">${name}</div>`).join("");
+
+        return `
+          <div class="ticker-item">
+            <div class="ticker-category">${category}</div>
+            ${winnerHtml}
+          </div>
+        `;
+      }).join("");
+
+      const content = track.innerHTML;
+      track.innerHTML = content + content;
     }
 
     function showOverlay(data) {
