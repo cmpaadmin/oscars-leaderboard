@@ -52,10 +52,19 @@
     socket.on("INIT", (payload) => {
       if (!payload) return;
 
-      currentWinners = payload.winners || {};
+      currentWinners = {};
+
+      Object.entries(payload.winners || {}).forEach(([category, value]) => {
+        if (Array.isArray(value)) {
+          if (value.length > 0) currentWinners[category] = value;
+        } else if (value) {
+          currentWinners[category] = [value];
+        }
+      });
+
       renderWinnerTicker();
 
-      const started = Object.keys(payload.winners || {}).length > 0;
+      const started = Object.keys(currentWinners).length > 0;
       if (started) {
         renderLeaderboard(payload.leaderboard || []);
       } else {
@@ -187,19 +196,25 @@
     }
 
     function renderWinnerTicker() {
+      const ticker = document.getElementById("winnerTicker");
       const track = document.getElementById("winnerTickerTrack");
-      if (!track) return;
+      if (!ticker || !track) return;
 
       const categories = Object.keys(currentWinners);
 
       if (categories.length === 0) {
         track.innerHTML = "";
+        ticker.style.display = "none";
         return;
       }
 
+      ticker.style.display = "block";
+
       track.innerHTML = categories.map((category) => {
         const winnerList = currentWinners[category] || [];
-        const winnerHtml = winnerList.map(name => `<div class="ticker-winner">${name}</div>`).join("");
+        const winnerHtml = winnerList
+          .map(name => `<div class="ticker-winner">${name}</div>`)
+          .join("");
 
         return `
           <div class="ticker-item">
