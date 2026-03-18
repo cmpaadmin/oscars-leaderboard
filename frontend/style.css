@@ -195,14 +195,13 @@ body{
 #overlayCategory,
 #overlayWinner,
 #overlayMost{
-  font-size:20px; /* JS will override */
-  font-weight:bold;
+  font-size:40px;
   color:#ffd700;
-  text-align:center;
+  opacity:1;
 }
 
-.overlay-section-title{
-  font-size:22px;
-  text-decoration:underline;
-  color:#d4af37;
+.winner-line{
+  display:block;
+  margin:10px 0;
+  color:#ffd700;
 }
