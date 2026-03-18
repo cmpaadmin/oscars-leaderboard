@@ -111,7 +111,8 @@ body{
 
 .lb-row{
   display:flex;
-  justify-content:space-between;
+  justify-content:center;
+  gap:12px; /*controlled spacing instead */
 
   font-size:18px;
 
@@ -197,33 +198,44 @@ body{
 
   z-index:1; /* 🔥 IMPORTANT */
 }
-.winner-line{
-  display:block;
-  text-align:center;
-}
+
 
 /* ------------------------------------------------ */
-/* POPUP TEXT (JS CONTROLS SIZE) */
+/* POPUP TEXT (FIXED + CLEAN) */
 /* ------------------------------------------------ */
 
 #overlayCategory,
 #overlayWinner,
-#overlayMost{
+#overlayMost,
 .overlay-section-title{
   position:relative;
-  z-index:2; /* 🔥 ensures text sits ABOVE black box */
-}
+  z-index:2;
 
-.winner-line{
   color:#ffd700 !important;
 
   text-shadow:
   0 0 10px rgba(255,215,0,0.9),
   0 0 20px rgba(255,215,0,0.7),
   0 0 40px rgba(255,215,0,0.5);
+
+  margin:6px 0;
+  line-height:1.1;
+
+  font-size:60px; /* 🔥 base size BEFORE scaling */
 }
+
+
+/* winner lines */
+.winner-line{
+  display:block;
+  margin:4px 0;
+  color:#ffd700;
+}
+
+
+/* titles (Winner / Most Chosen) */
 .overlay-section-title{
-  font-size:42px;
-  margin:10px 0;
-  flex-shrink:0; /* 🔥 prevents disappearing */
+  font-weight:bold;
+  text-decoration:underline;
+  flex-shrink:0;
 }
