@@ -371,7 +371,7 @@ function launchConfetti(){
   })();
 }
 
-  function fitOverlayText(){
+function fitOverlayText(){
 
   const box = document.getElementById("overlayContent");
   const category = document.getElementById("overlayCategory");
@@ -380,32 +380,43 @@ function launchConfetti(){
 
   if(!box || !category || !winner || !most) return;
 
-  const elements = [category, winner, most];
+  /* start bigger */
+  let categorySize = 40;
+  let winnerSize = 80;
+  let mostSize = 60;
 
-  /* reset sizes */
-  elements.forEach(el=>{
-    el.style.fontSize = "20px";
-    el.style.lineHeight = "1.1";
-  });
+  category.style.fontSize = categorySize + "px";
+  winner.style.fontSize = winnerSize + "px";
+  most.style.fontSize = mostSize + "px";
 
-  let size = 20;
-  let maxSize = 300;
+  let guard = 0;
 
-  while(size < maxSize){
+  /* grow until it almost fills */
+  while(box.scrollHeight < box.clientHeight * 0.92 && guard < 200){
 
-    elements.forEach(el=>{
-      el.style.fontSize = size + "px";
-    });
+    categorySize += 2;
+    winnerSize += 3;
+    mostSize += 2;
 
-    if(box.scrollHeight > box.clientHeight * 0.92){
-      size--;
-      elements.forEach(el=>{
-        el.style.fontSize = size + "px";
-      });
-      break;
-    }
+    category.style.fontSize = categorySize + "px";
+    winner.style.fontSize = winnerSize + "px";
+    most.style.fontSize = mostSize + "px";
 
-    size += 2;
+    guard++;
+  }
+
+  /* shrink if overflow */
+  while(box.scrollHeight > box.clientHeight * 0.95 && guard < 400){
+
+    categorySize -= 2;
+    winnerSize -= 3;
+    mostSize -= 2;
+
+    category.style.fontSize = categorySize + "px";
+    winner.style.fontSize = winnerSize + "px";
+    most.style.fontSize = mostSize + "px";
+
+    guard++;
   }
 }
 </script>
