@@ -185,7 +185,7 @@ body{
 }
 .winner-line{
   display:block;
-  margin:8px 0;
+  text-align:center;
 }
 
 /* ------------------------------------------------ */
