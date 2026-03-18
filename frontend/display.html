@@ -331,41 +331,35 @@ function fitOverlayText(){
   const box = document.getElementById("overlayContent");
 
   const category = document.getElementById("overlayCategory");
-  const winner = document.getElementById("overlayWinner");
-  const most = document.getElementById("overlayMost");
-
   const winnerTitle = document.getElementById("winnerTitle");
+  const winner = document.getElementById("overlayWinner");
   const mostTitle = document.getElementById("mostTitle");
+  const most = document.getElementById("overlayMost");
 
   if(!box) return;
 
-  /* ✅ LOCK TITLES (DO NOT SCALE THESE DOWN) */
-  winnerTitle.style.fontSize = "42px";
-  mostTitle.style.fontSize = "42px";
-
-  /* 🔥 START BIG */
-  let size = 140;
+  let size = 140; // 🔥 start BIG
 
   let guard = 0;
 
-  while(size > 30 && guard < 200){
+  while(size > 40 && guard < 200){
 
-    category.style.fontSize = (size * 0.6) + "px";
+    category.style.fontSize = size + "px";
+    winnerTitle.style.fontSize = size + "px";
     winner.style.fontSize = size + "px";
-    most.style.fontSize = (size * 0.6) + "px";
+    mostTitle.style.fontSize = size + "px";
+    most.style.fontSize = size + "px";
 
-    /* apply to each winner line */
     winner.querySelectorAll(".winner-line").forEach(el=>{
       el.style.fontSize = size + "px";
       el.style.lineHeight = "1.1";
     });
 
-    /* stop shrinking once it fits */
-    if(box.scrollHeight <= box.clientHeight * 0.9){
+    if(box.scrollHeight <= box.clientHeight * 0.92){
       break;
     }
 
-    size -= 3;
+    size -= 2; // 🔥 slow shrink = better size
     guard++;
   }
 }
