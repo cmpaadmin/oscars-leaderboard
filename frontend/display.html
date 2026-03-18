@@ -261,10 +261,10 @@ function renderWinnerTicker(){
     const winners = currentWinners[cat]||[];
 
     return `
-      <div class="ticker-item">
-        <div class="ticker-category">${cat}</div>
-        ${winners.map(w=>`<div class="ticker-winner">${w}</div>`).join("")}
-      </div>
+     <div class="lb-row">
+  <span>Name</span>
+  <span>12</span>
+</div>
     `;
   }).join("");
 
