@@ -36,11 +36,11 @@
 
     <div id="overlayCategory"></div>
 
-    <div class="overlay-section-title">Winner</div>
-    <div id="overlayWinner"></div>
+   <div class="overlay-section-title" id="winnerTitle">Winner</div>
+<div id="overlayWinner"></div>
 
-    <div class="overlay-section-title">Most Chosen</div>
-    <div id="overlayMost"></div>
+<div class="overlay-section-title" id="mostTitle">Most Chosen</div>
+<div id="overlayMost"></div>
 
   </div>
 </div>
@@ -325,36 +325,50 @@ function launchConfetti(){
 
 
 /* ---------------- TEXT SCALING ---------------- */
-
 function fitOverlayText(){
 
   const box = document.getElementById("overlayContent");
+
   const category = document.getElementById("overlayCategory");
   const winner = document.getElementById("overlayWinner");
   const most = document.getElementById("overlayMost");
 
-  let size = 120;
+  const winnerTitle = document.getElementById("winnerTitle");
+  const mostTitle = document.getElementById("mostTitle");
+
+  if(!box) return;
+
+  /* ✅ LOCK TITLES (DO NOT SCALE THESE DOWN) */
+  winnerTitle.style.fontSize = "42px";
+  mostTitle.style.fontSize = "42px";
+
+  /* 🔥 START BIG */
+  let size = 140;
+
   let guard = 0;
 
-  while(size > 20 && guard < 200){
+  while(size > 30 && guard < 200){
 
     category.style.fontSize = (size * 0.6) + "px";
     winner.style.fontSize = size + "px";
     most.style.fontSize = (size * 0.6) + "px";
 
+    /* apply to each winner line */
     winner.querySelectorAll(".winner-line").forEach(el=>{
       el.style.fontSize = size + "px";
-      el.style.display = "block";
+      el.style.lineHeight = "1.1";
     });
 
-    if(box.scrollHeight <= box.clientHeight * 0.95){
+    /* stop shrinking once it fits */
+    if(box.scrollHeight <= box.clientHeight * 0.9){
       break;
     }
 
-    size -= 4;
+    size -= 3;
     guard++;
   }
 }
+
 </script>
 
 </body>
