@@ -269,7 +269,6 @@ function renderLeaderboardTicker(){
 
 
 /* ---------------- POPUP (FIXED) ---------------- */
-
 function showOverlay(data){
 
   const overlay = document.getElementById("winnerOverlay");
@@ -278,34 +277,58 @@ function showOverlay(data){
   const winnerEl = document.getElementById("overlayWinner");
   const mostEl = document.getElementById("overlayMost");
 
+  console.log("WINNER EVENT DATA:", data); // 🔍 debug
+
+  /* CATEGORY */
   categoryEl.textContent = data?.category || "";
 
+  /* ✅ HANDLE ALL POSSIBLE FORMATS */
   let winners = [];
 
-  if(Array.isArray(data?.winners) && data.winners.length){
+  if (Array.isArray(data?.winners) && data.winners.length){
     winners = data.winners;
-  } else if(data?.winner){
+  }
+  else if (data?.winner){
     winners = [data.winner];
   }
+  else if (typeof data === "object"){
+    // fallback scan (covers unexpected formats)
+    Object.values(data).forEach(v=>{
+      if(typeof v === "string" && v.length > 2){
+        winners.push(v);
+      }
+    });
+  }
 
+  /* ✅ FORCE DISPLAY */
   winnerEl.innerHTML = winners.length
     ? winners.map(w => `<div class="winner-line">${w}</div>`).join("")
-    : `<div class="winner-line">No Winner</div>`;
+    : `<div class="winner-line">Winner Not Found</div>`;
 
-  mostEl.textContent = data?.mostChosen || "N/A";
+  /* MOST CHOSEN */
+  const mostVal =
+    data?.mostChosen ||
+    data?.most ||
+    data?.popular ||
+    "N/A";
+
+  mostEl.textContent = mostVal;
 
   overlay.style.display = "block";
 
+  /* 🔥 WAIT FOR DOM RENDER THEN SCALE */
   setTimeout(()=>{
-    fitOverlayText(); // 🔥 ensures scaling AFTER render
-  },100);
+    fitOverlayText();
+  },150);
 
   launchConfetti();
 
+  /* ✅ EXACTLY 10 SECONDS */
   setTimeout(()=>{
     overlay.style.display = "none";
   },10000);
 }
+
 
 
 /* ---------------- CONFETTI ---------------- */
@@ -334,16 +357,24 @@ function fitOverlayText(){
   const winner = document.getElementById("overlayWinner");
   const most = document.getElementById("overlayMost");
 
-  let cat = 60;
-  let win = 140;
-  let mst = 80;
+  if(!box) return;
+
+  let cat = 80;
+  let win = 180;
+  let mst = 100;
 
   let guard = 0;
 
-  while(box.scrollHeight < box.clientHeight * 0.9 && guard < 300){
+  /* RESET FIRST */
+  category.style.fontSize = cat + "px";
+  winner.style.fontSize = win + "px";
+  most.style.fontSize = mst + "px";
+
+  /* 🔥 GROW BIG */
+  while(box.scrollHeight < box.clientHeight * 0.9 && guard < 400){
 
     cat += 2;
-    win += 4;
+    win += 5;
     mst += 2;
 
     category.style.fontSize = cat + "px";
@@ -353,10 +384,11 @@ function fitOverlayText(){
     guard++;
   }
 
-  while(box.scrollHeight > box.clientHeight * 0.95 && guard < 600){
+  /* 🔥 SHRINK IF OVERFLOW */
+  while(box.scrollHeight > box.clientHeight * 0.95 && guard < 800){
 
     cat -= 2;
-    win -= 4;
+    win -= 5;
     mst -= 2;
 
     category.style.fontSize = cat + "px";
@@ -366,8 +398,10 @@ function fitOverlayText(){
     guard++;
   }
 
+  /* 🔥 APPLY TO EACH WINNER LINE */
   winner.querySelectorAll(".winner-line").forEach(el=>{
     el.style.fontSize = win + "px";
+    el.style.margin = "12px 0";
   });
 }
 </script>
