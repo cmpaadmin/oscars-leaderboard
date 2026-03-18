@@ -82,7 +82,6 @@ socket.on("LEADERBOARD",(payload)=>{
 });
 
 socket.on("WINNER",(data)=>{
-
   const cat = data.category.replace(/\s+\(TIE!\)$/,"");
 
   currentWinners[cat] = Array.isArray(data.winners)
@@ -268,7 +267,8 @@ function renderLeaderboardTicker(){
 }
 
 
-/* ---------------- POPUP (FIXED) ---------------- */
+/* ---------------- POPUP (FINAL FIX) ---------------- */
+
 function showOverlay(data){
 
   const overlay = document.getElementById("winnerOverlay");
@@ -277,58 +277,34 @@ function showOverlay(data){
   const winnerEl = document.getElementById("overlayWinner");
   const mostEl = document.getElementById("overlayMost");
 
-  console.log("WINNER EVENT DATA:", data); // 🔍 debug
-
-  /* CATEGORY */
   categoryEl.textContent = data?.category || "";
 
-  /* ✅ HANDLE ALL POSSIBLE FORMATS */
   let winners = [];
 
-  if (Array.isArray(data?.winners) && data.winners.length){
+  if(Array.isArray(data?.winners) && data.winners.length){
     winners = data.winners;
-  }
-  else if (data?.winner){
+  } else if(data?.winner){
     winners = [data.winner];
   }
-  else if (typeof data === "object"){
-    // fallback scan (covers unexpected formats)
-    Object.values(data).forEach(v=>{
-      if(typeof v === "string" && v.length > 2){
-        winners.push(v);
-      }
-    });
-  }
 
-  /* ✅ FORCE DISPLAY */
   winnerEl.innerHTML = winners.length
     ? winners.map(w => `<div class="winner-line">${w}</div>`).join("")
-    : `<div class="winner-line">Winner Not Found</div>`;
+    : `<div class="winner-line">No Winner</div>`;
 
-  /* MOST CHOSEN */
-  const mostVal =
-    data?.mostChosen ||
-    data?.most ||
-    data?.popular ||
-    "N/A";
-
-  mostEl.textContent = mostVal;
+  mostEl.textContent = data?.mostChosen || "N/A";
 
   overlay.style.display = "block";
 
-  /* 🔥 WAIT FOR DOM RENDER THEN SCALE */
   setTimeout(()=>{
     fitOverlayText();
   },150);
 
   launchConfetti();
 
-  /* ✅ EXACTLY 10 SECONDS */
   setTimeout(()=>{
     overlay.style.display = "none";
   },10000);
 }
-
 
 
 /* ---------------- CONFETTI ---------------- */
@@ -348,7 +324,7 @@ function launchConfetti(){
 }
 
 
-/* ---------------- TEXT SCALING (FINAL) ---------------- */
+/* ---------------- TEXT SCALING ---------------- */
 
 function fitOverlayText(){
 
@@ -357,52 +333,27 @@ function fitOverlayText(){
   const winner = document.getElementById("overlayWinner");
   const most = document.getElementById("overlayMost");
 
-  if(!box) return;
-
-  let cat = 80;
-  let win = 180;
-  let mst = 100;
-
+  let size = 120;
   let guard = 0;
 
-  /* RESET FIRST */
-  category.style.fontSize = cat + "px";
-  winner.style.fontSize = win + "px";
-  most.style.fontSize = mst + "px";
+  while(size > 20 && guard < 200){
 
-  /* 🔥 GROW BIG */
-  while(box.scrollHeight < box.clientHeight * 0.9 && guard < 400){
+    category.style.fontSize = (size * 0.6) + "px";
+    winner.style.fontSize = size + "px";
+    most.style.fontSize = (size * 0.6) + "px";
 
-    cat += 2;
-    win += 5;
-    mst += 2;
+    winner.querySelectorAll(".winner-line").forEach(el=>{
+      el.style.fontSize = size + "px";
+      el.style.display = "block";
+    });
 
-    category.style.fontSize = cat + "px";
-    winner.style.fontSize = win + "px";
-    most.style.fontSize = mst + "px";
+    if(box.scrollHeight <= box.clientHeight * 0.95){
+      break;
+    }
 
+    size -= 4;
     guard++;
   }
-
-  /* 🔥 SHRINK IF OVERFLOW */
-  while(box.scrollHeight > box.clientHeight * 0.95 && guard < 800){
-
-    cat -= 2;
-    win -= 5;
-    mst -= 2;
-
-    category.style.fontSize = cat + "px";
-    winner.style.fontSize = win + "px";
-    most.style.fontSize = mst + "px";
-
-    guard++;
-  }
-
-  /* 🔥 APPLY TO EACH WINNER LINE */
-  winner.querySelectorAll(".winner-line").forEach(el=>{
-    el.style.fontSize = win + "px";
-    el.style.margin = "12px 0";
-  });
 }
 </script>
 
