@@ -286,7 +286,8 @@ function showOverlay(data){
   } else if(data?.winner){
     winners = [data.winner];
   }
-
+winnerEl.style.color = "#ffd700";
+mostEl.style.color = "#ffd700";
   winnerEl.innerHTML = winners.length
     ? winners.map(w => `<div class="winner-line">${w}</div>`).join("")
     : `<div class="winner-line">No Winner</div>`;
