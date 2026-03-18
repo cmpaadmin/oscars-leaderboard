@@ -146,24 +146,6 @@ position:relative;
 
 
 /* ------------------------------------------------ */
-/* TICKER TRACK */
-/* ------------------------------------------------ */
-
-#winnerTickerTrack,
-#leaderboardTickerTrack{
-
-display:flex;
-flex-direction:column;
-align-items:center;
-
-width:100%;
-
-animation:tickerScroll linear infinite;
-
-}
-
-
-/* ------------------------------------------------ */
 /* TICKER ITEMS */
 /* ------------------------------------------------ */
 
@@ -256,23 +238,6 @@ min-width:40px;
 
 
 /* ------------------------------------------------ */
-/* SCROLL ANIMATION */
-/* ------------------------------------------------ */
-
-@keyframes tickerScroll{
-
-0%{
-transform:translateY(0);
-}
-
-100%{
-transform:translateY(-100%);
-}
-
-}
-
-
-/* ------------------------------------------------ */
 /* LEADERBOARD */
 /* ------------------------------------------------ */
 
@@ -313,7 +278,7 @@ animation:slideUp .6s ease;
 }
 
 
-/* tighter spacing for tied rows */
+/* tighter spacing for ties */
 
 .tie-line{
 margin:1px 0;
@@ -325,7 +290,7 @@ margin-top:6px;
 }
 
 
-/* rank number */
+/* rank */
 
 .rank{
 
@@ -346,21 +311,6 @@ text-shadow:
 
 
 /* ------------------------------------------------ */
-/* LEADER (NO ANIMATION) */
-/* ------------------------------------------------ */
-
-.leader{
-
-color:#ffd700;
-
-text-shadow:
-0 0 12px gold,
-0 0 24px gold;
-
-}
-
-
-/* ------------------------------------------------ */
 /* ENTRY ANIMATION */
 /* ------------------------------------------------ */
 
@@ -376,6 +326,15 @@ transform:translateY(0);
 opacity:1;
 }
 
+}
+
+
+/* ------------------------------------------------ */
+/* LEADER (NO SPECIAL STYLE) */
+/* ------------------------------------------------ */
+
+.leader{
+/* intentionally same as others */
 }
 
 
@@ -434,7 +393,6 @@ overflow:hidden;
 #overlayBottomGroup{
 
 width:100%;
-
 display:flex;
 flex-direction:column;
 align-items:center;
@@ -448,15 +406,13 @@ margin-top:20px;
 
 
 /* ------------------------------------------------ */
-/* POPUP TEXT */
+/* POPUP TEXT (FIXED SIZE) */
 /* ------------------------------------------------ */
 
 #overlayCategory{
-
-font-size:4.5vh;
+font-size:clamp(42px, 6vh, 90px);
 line-height:1.05;
 font-weight:bold;
-
 margin:0;
 
 color:#ffd700;
@@ -467,19 +423,15 @@ text-shadow:
 0 0 40px rgba(255,215,0,0.5);
 
 max-width:95%;
-
 }
 
 .overlay-section-title{
-
-font-size:3.4vh;
+font-size:clamp(28px, 4vh, 60px);
 line-height:1;
 font-weight:bold;
-
 margin:0;
 
 color:#ffd700;
-
 text-decoration:underline;
 
 text-shadow:
@@ -487,17 +439,13 @@ text-shadow:
 0 0 18px rgba(255,215,0,0.7);
 
 max-width:95%;
-
 }
 
 #overlayWinner,
 #overlayMost{
-
-font-size:7.2vh;
+font-size:clamp(48px, 8vh, 140px);
 line-height:1.05;
-
 font-weight:bold;
-
 margin:0;
 
 color:#ffd700;
@@ -507,10 +455,8 @@ text-shadow:
 0 0 20px rgba(255,215,0,0.7);
 
 max-width:95%;
-
 word-break:normal;
 overflow-wrap:break-word;
-
 }
 
 #overlayWinner div{
