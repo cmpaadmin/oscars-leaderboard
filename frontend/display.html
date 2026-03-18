@@ -241,8 +241,7 @@ function renderWinnerTicker(){
   }).join("");
 
   track.innerHTML = html + html;
-
-  startScroll(track,"left"); // 🔥 FIXED
+  startScroll(track,"left");
 }
 
 
@@ -265,12 +264,11 @@ function renderLeaderboardTicker(){
   lastLeaderboardHTML = html;
 
   track.innerHTML = html + html;
-
   startScroll(track,"right");
 }
 
 
-/* ---------------- POPUP ---------------- */
+/* ---------------- POPUP (FIXED) ---------------- */
 
 function showOverlay(data){
 
@@ -282,28 +280,25 @@ function showOverlay(data){
 
   categoryEl.textContent = data?.category || "";
 
-  /* ✅ ALWAYS normalize winners */
   let winners = [];
 
-  if(Array.isArray(data?.winners)){
+  if(Array.isArray(data?.winners) && data.winners.length){
     winners = data.winners;
   } else if(data?.winner){
     winners = [data.winner];
   }
 
-  /* ✅ FORCE visible content */
   winnerEl.innerHTML = winners.length
     ? winners.map(w => `<div class="winner-line">${w}</div>`).join("")
-    : "<div class='winner-line'>—</div>";
+    : `<div class="winner-line">No Winner</div>`;
 
   mostEl.textContent = data?.mostChosen || "N/A";
 
   overlay.style.display = "block";
 
-  /* 🔥 DELAY ensures DOM is rendered BEFORE scaling */
   setTimeout(()=>{
-    fitOverlayText();
-  },50);
+    fitOverlayText(); // 🔥 ensures scaling AFTER render
+  },100);
 
   launchConfetti();
 
@@ -330,7 +325,8 @@ function launchConfetti(){
 }
 
 
-/* ---------------- TEXT SCALING (FIXED) ---------------- */
+/* ---------------- TEXT SCALING (FINAL) ---------------- */
+
 function fitOverlayText(){
 
   const box = document.getElementById("overlayContent");
@@ -338,20 +334,12 @@ function fitOverlayText(){
   const winner = document.getElementById("overlayWinner");
   const most = document.getElementById("overlayMost");
 
-  if(!box) return;
-
   let cat = 60;
-  let win = 120;
-  let mst = 70;
+  let win = 140;
+  let mst = 80;
 
   let guard = 0;
 
-  /* reset */
-  category.style.fontSize = cat + "px";
-  winner.style.fontSize = win + "px";
-  most.style.fontSize = mst + "px";
-
-  /* 🔥 grow */
   while(box.scrollHeight < box.clientHeight * 0.9 && guard < 300){
 
     cat += 2;
@@ -365,7 +353,6 @@ function fitOverlayText(){
     guard++;
   }
 
-  /* 🔥 shrink if needed */
   while(box.scrollHeight > box.clientHeight * 0.95 && guard < 600){
 
     cat -= 2;
@@ -379,13 +366,10 @@ function fitOverlayText(){
     guard++;
   }
 
-  /* ✅ APPLY SIZE TO CHILD LINES (THIS WAS MISSING) */
-  const lines = winner.querySelectorAll(".winner-line");
-  lines.forEach(el=>{
+  winner.querySelectorAll(".winner-line").forEach(el=>{
     el.style.fontSize = win + "px";
   });
 }
-
 </script>
 
 </body>
