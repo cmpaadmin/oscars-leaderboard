@@ -389,39 +389,30 @@ opacity:1;
 /* ------------------------------------------------ */
 
 .leader{
-animation:leaderGlow 1.2s ease;
-transform:scale(1.1);
+animation:leaderGlow 1.5s ease;
 }
 
+/* glow only — NO scale */
 @keyframes leaderGlow{
 
 0%{
-transform:scale(1);
-text-shadow:none;
+text-shadow:
+0 0 6px rgba(255,215,0,0.6),
+0 0 12px rgba(255,215,0,0.4);
 }
 
 50%{
-
-transform:scale(1.18);
-
 text-shadow:
-0 0 10px gold,
-0 0 20px gold,
-0 0 40px gold,
-0 0 60px gold;
-
+0 0 12px gold,
+0 0 24px gold,
+0 0 40px gold;
 }
 
 100%{
-
-transform:scale(1.1);
-
 text-shadow:
-0 0 12px rgba(255,215,0,0.8),
-0 0 22px rgba(255,215,0,0.6);
-
+0 0 6px rgba(255,215,0,0.6),
+0 0 12px rgba(255,215,0,0.4);
 }
-
 }
 
 
