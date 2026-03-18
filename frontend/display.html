@@ -328,6 +328,10 @@ function showOverlay(data){
 
   overlay.style.display = "block";
 
+  requestAnimationFrame(()=>{
+    fitOverlayText(); // 🔥 THIS IS THE KEY
+  });
+
   launchConfetti();
 
   setTimeout(()=>{
