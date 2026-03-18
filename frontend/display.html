@@ -11,37 +11,37 @@
   VOTES ARE BEING TABULATED<span id="dots"></span>
 </div>
 
+<!-- LEFT TICKER -->
 <div id="winnerTicker">
   <div class="ticker-header">Tonight's Winners</div>
-
   <div class="ticker-scroll">
     <div id="winnerTickerTrack" class="ticker-track"></div>
   </div>
 </div>
 
+<!-- CENTER -->
 <div id="leaderboard"></div>
 
+<!-- RIGHT TICKER -->
 <div id="leaderboardTicker">
   <div class="ticker-header">Full Leaderboard</div>
-
   <div class="ticker-scroll">
     <div id="leaderboardTickerTrack" class="ticker-track"></div>
   </div>
 </div>
 
+<!-- POPUP -->
 <div id="winnerOverlay">
   <div class="overlay-content" id="overlayContent">
-    <div id="overlayTopGroup">
-      <div id="overlayCategory"></div>
 
-      <div class="overlay-section-title">Winner</div>
-      <div id="overlayWinner"></div>
-    </div>
+    <div id="overlayCategory"></div>
 
-    <div id="overlayBottomGroup">
-      <div class="overlay-section-title">Most Chosen</div>
-      <div id="overlayMost"></div>
-    </div>
+    <div class="overlay-section-title">Winner</div>
+    <div id="overlayWinner"></div>
+
+    <div class="overlay-section-title">Most Chosen</div>
+    <div id="overlayMost"></div>
+
   </div>
 </div>
 
@@ -49,14 +49,12 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 <script>
-
 const socket = io();
 
 let currentWinners = {};
 let currentLeaderboard = [];
 
 let scrollIntervals = {};
-let lastWinnerHTML = "";
 let lastLeaderboardHTML = "";
 
 /* ---------------- TABULATING DOTS ---------------- */
@@ -145,34 +143,25 @@ function renderLeaderboard(){
 
   div.innerHTML = "";
 
-  const data = currentLeaderboard;
-  if(!data || data.length === 0) return;
-
-  /* group by score */
   const grouped = {};
-  data.forEach(p=>{
+  currentLeaderboard.forEach(p=>{
     if(!grouped[p.score]) grouped[p.score] = [];
     grouped[p.score].push(p.name);
   });
 
-  /* sort scores high → low */
   const scores = Object.keys(grouped)
     .map(Number)
     .sort((a,b)=>b-a);
 
   let rank = 1;
-  let visibleLines = 0;
-  const maxLines = 5;
+  let lines = 0;
 
   scores.forEach(score=>{
-
-    if(visibleLines >= maxLines) return;
+    if(lines >= 5) return;
 
     const players = grouped[score];
 
-    /* CASE 1: 4+ tied → collapse */
     if(players.length > 3){
-
       div.innerHTML += `
         <div class="entry">
           <span class="rank">#${rank}</span>
@@ -180,35 +169,23 @@ function renderLeaderboard(){
           <span> ${score}</span>
         </div>
       `;
-
-      visibleLines += 1;
-
-    }
-
-    /* CASE 2: 1–3 tied → list individually SAME rank */
-    else{
-
-      players.forEach((name, index)=>{
-
-        if(visibleLines >= maxLines) return;
+      lines++;
+    } else {
+      players.forEach((name,i)=>{
+        if(lines >= 5) return;
 
         div.innerHTML += `
-          <div class="entry tie-line ${index>0 ? "tie-subline":""}">
-            <span class="rank">${index===0 ? "#" + rank : ""}</span>
+          <div class="entry tie-line ${i>0 ? "tie-subline":""}">
+            <span class="rank">${i===0 ? "#"+rank : ""}</span>
             <span>${name}</span>
             <span> ${score}</span>
           </div>
         `;
-
-        visibleLines += 1;
-
+        lines++;
       });
-
     }
 
-    /* advance rank correctly */
     rank += players.length;
-
   });
 }
 
@@ -222,7 +199,7 @@ function startScroll(track,id){
   let pos = 0;
 
   scrollIntervals[id] = setInterval(()=>{
-    pos += 0.5;
+    pos += 0.4;
 
     if(pos >= track.scrollHeight/2){
       pos = 0;
@@ -249,32 +226,23 @@ function stopAllScroll(){
 function renderWinnerTicker(){
 
   const track = document.getElementById("winnerTickerTrack");
-  const cats = Object.keys(currentWinners);
 
-  if(cats.length === 0){
-    track.innerHTML="";
-    stopScroll("left");
-    return;
-  }
+  const html = Object.keys(currentWinners).map(category=>{
 
-  const html = cats.map(cat=>{
-    const winners = currentWinners[cat]||[];
+    const winners = currentWinners[category];
 
     return `
-     <div class="lb-row">
-  <span>Name</span>
-  <span>12</span>
-</div>
+      <div class="ticker-item">
+        <div class="ticker-category">${category}</div>
+        ${winners.map(w=>`<div class="ticker-winner">${w}</div>`).join("")}
+      </div>
     `;
+
   }).join("");
-
-  if(html === lastWinnerHTML) return;
-
-  lastWinnerHTML = html;
 
   track.innerHTML = html + html;
 
-  startScroll(track,"left");
+  startScroll(track,"left"); // 🔥 FIXED
 }
 
 
@@ -284,19 +252,11 @@ function renderLeaderboardTicker(){
 
   const track = document.getElementById("leaderboardTickerTrack");
 
-  if(!currentLeaderboard.length){
-    track.innerHTML="";
-    stopScroll("right");
-    return;
-  }
-
   const html = currentLeaderboard.map((p,i)=>`
-    <div class="ticker-item">
-      <div class="ticker-line">
-        <span>#${i+1}</span>
-        <span>${p.name}</span>
-        <span>${p.score}</span>
-      </div>
+    <div class="lb-row">
+      <span>#${i+1}</span>
+      <span>${p.name}</span>
+      <span>${p.score}</span>
     </div>
   `).join("");
 
@@ -310,7 +270,7 @@ function renderLeaderboardTicker(){
 }
 
 
-/* ---------------- WINNER POPUP ---------------- */
+/* ---------------- POPUP ---------------- */
 
 function showOverlay(data){
 
@@ -331,7 +291,7 @@ function showOverlay(data){
   overlay.style.display = "block";
 
   requestAnimationFrame(()=>{
-    fitOverlayText(); // 🔥 THIS IS THE KEY
+    fitOverlayText(); // 🔥 FIXED
   });
 
   launchConfetti();
@@ -349,27 +309,17 @@ function launchConfetti(){
   const end = Date.now() + 10000;
 
   (function frame(){
-    confetti({
-      particleCount:6,
-      angle:60,
-      spread:70,
-      origin:{x:0},
-      zIndex:9999
-    });
-
-    confetti({
-      particleCount:6,
-      angle:120,
-      spread:70,
-      origin:{x:1},
-      zIndex:9999
-    });
+    confetti({particleCount:6,angle:60,spread:70,origin:{x:0}});
+    confetti({particleCount:6,angle:120,spread:70,origin:{x:1}});
 
     if(Date.now() < end){
       requestAnimationFrame(frame);
     }
   })();
 }
+
+
+/* ---------------- TEXT SCALING (FIXED) ---------------- */
 
 function fitOverlayText(){
 
@@ -378,43 +328,34 @@ function fitOverlayText(){
   const winner = document.getElementById("overlayWinner");
   const most = document.getElementById("overlayMost");
 
-  if(!box || !category || !winner || !most) return;
-
-  /* start bigger */
-  let categorySize = 40;
-  let winnerSize = 80;
-  let mostSize = 60;
-
-  category.style.fontSize = categorySize + "px";
-  winner.style.fontSize = winnerSize + "px";
-  most.style.fontSize = mostSize + "px";
+  let cat = 50;
+  let win = 100;
+  let mst = 70;
 
   let guard = 0;
 
-  /* grow until it almost fills */
   while(box.scrollHeight < box.clientHeight * 0.92 && guard < 200){
 
-    categorySize += 2;
-    winnerSize += 3;
-    mostSize += 2;
+    cat += 2;
+    win += 4;
+    mst += 2;
 
-    category.style.fontSize = categorySize + "px";
-    winner.style.fontSize = winnerSize + "px";
-    most.style.fontSize = mostSize + "px";
+    category.style.fontSize = cat + "px";
+    winner.style.fontSize = win + "px";
+    most.style.fontSize = mst + "px";
 
     guard++;
   }
 
-  /* shrink if overflow */
   while(box.scrollHeight > box.clientHeight * 0.95 && guard < 400){
 
-    categorySize -= 2;
-    winnerSize -= 3;
-    mostSize -= 2;
+    cat -= 2;
+    win -= 4;
+    mst -= 2;
 
-    category.style.fontSize = categorySize + "px";
-    winner.style.fontSize = winnerSize + "px";
-    most.style.fontSize = mostSize + "px";
+    category.style.fontSize = cat + "px";
+    winner.style.fontSize = win + "px";
+    most.style.fontSize = mst + "px";
 
     guard++;
   }
