@@ -7,139 +7,190 @@
 </head>
 <body>
 
-  <div id="tabulatingMessage">
-    VOTES ARE BEING TABULATED<span id="dots"></span>
-  </div>
+<div id="tabulatingMessage">
+  VOTES ARE BEING TABULATED<span id="dots"></span>
+</div>
 
-  <div id="winnerTicker">
-    <div class="ticker-header">Tonight's Winners</div>
-    <div class="ticker-window">
-      <div id="winnerTickerTrack"></div>
+<div id="winnerTicker" style="display:none;">
+  <div class="ticker-header">Tonight's Winners</div>
+  <div class="ticker-window">
+    <div id="winnerTickerTrack"></div>
+  </div>
+</div>
+
+<div id="leaderboard"></div>
+
+<div id="leaderboardTicker" style="display:none;">
+  <div class="ticker-header">Full Leaderboard</div>
+  <div class="ticker-window">
+    <div id="leaderboardTickerTrack"></div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+const socket = io();
+
+let currentWinners = {};
+let currentLeaderboard = [];
+
+let scrollIntervals = {};
+
+/* ---------------- DOTS FIX ---------------- */
+let dotCount = 0;
+setInterval(()=>{
+  const d = document.getElementById("dots");
+  if(!d) return;
+  dotCount = (dotCount+1)%4;
+  d.textContent=".".repeat(dotCount);
+},500);
+
+
+/* ---------------- SOCKET ---------------- */
+
+socket.on("INIT",(payload)=>{
+  currentWinners = payload.winners || {};
+  currentLeaderboard = payload.leaderboard || [];
+
+  updateUI();
+});
+
+socket.on("LEADERBOARD",(payload)=>{
+  currentLeaderboard = payload.data || [];
+  updateUI();
+});
+
+socket.on("WINNER",(data)=>{
+  const cat = data.category.replace(/\s+\(TIE!\)$/,"");
+  currentWinners[cat] = Array.isArray(data.winners)
+    ? data.winners
+    : [data.winner];
+
+  updateUI();
+});
+
+socket.on("UNDO_WINNER",(data)=>{
+  const cat = data.category.replace(/\s+\(TIE!\)$/,"");
+  delete currentWinners[cat];
+  updateUI();
+});
+
+socket.on("RESET",()=>{
+  currentWinners = {};
+  currentLeaderboard = {};
+  stopAllScroll();
+  updateUI();
+});
+
+
+/* ---------------- MASTER UI ---------------- */
+
+function updateUI(){
+  const started = Object.keys(currentWinners).length > 0;
+
+  document.getElementById("winnerTicker").style.display = started ? "block" : "none";
+  document.getElementById("leaderboardTicker").style.display = started ? "block" : "none";
+
+  if(!started){
+    document.getElementById("leaderboard").innerHTML="";
+    return;
+  }
+
+  renderWinnerTicker();
+  renderLeaderboardTicker();
+}
+
+
+/* ---------------- SCROLL ENGINE (NO CSS ANIMATION) ---------------- */
+
+function startScroll(track,id){
+
+  stopScroll(id);
+
+  let pos = 0;
+
+  scrollIntervals[id] = setInterval(()=>{
+    pos += 0.5; // SPEED CONTROL
+
+    if(pos >= track.scrollHeight/2){
+      pos = 0;
+    }
+
+    track.style.transform = `translateY(-${pos}px)`;
+
+  },20);
+}
+
+function stopScroll(id){
+  if(scrollIntervals[id]){
+    clearInterval(scrollIntervals[id]);
+  }
+}
+
+function stopAllScroll(){
+  Object.keys(scrollIntervals).forEach(stopScroll);
+}
+
+
+/* ---------------- LEFT TICKER ---------------- */
+
+function renderWinnerTicker(){
+
+  const track = document.getElementById("winnerTickerTrack");
+
+  const cats = Object.keys(currentWinners);
+
+  if(cats.length === 0){
+    track.innerHTML="";
+    stopScroll("left");
+    return;
+  }
+
+  const html = cats.map(cat=>{
+    const winners = currentWinners[cat]||[];
+
+    return `
+      <div class="ticker-item">
+        <div class="ticker-category">${cat}</div>
+        ${winners.map(w=>`<div class="ticker-winner">${w}</div>`).join("")}
+      </div>
+    `;
+  }).join("");
+
+  track.innerHTML = html + html;
+
+  startScroll(track,"left");
+}
+
+
+/* ---------------- RIGHT TICKER ---------------- */
+
+function renderLeaderboardTicker(){
+
+  const track = document.getElementById("leaderboardTickerTrack");
+
+  if(!currentLeaderboard.length){
+    track.innerHTML="";
+    stopScroll("right");
+    return;
+  }
+
+  const html = currentLeaderboard.map((p,i)=>`
+    <div class="ticker-item">
+      <div class="ticker-line">
+        <span>#${i+1}</span>
+        <span>${p.name}</span>
+        <span>${p.score}</span>
+      </div>
     </div>
-  </div>
+  `).join("");
 
-  <div id="leaderboard"></div>
+  track.innerHTML = html + html;
 
-  <div id="leaderboardTicker">
-    <div class="ticker-header">Full Leaderboard</div>
-    <div class="ticker-window">
-      <div id="leaderboardTickerTrack"></div>
-    </div>
-  </div>
+  startScroll(track,"right");
+}
 
-  <script src="/socket.io/socket.io.js"></script>
-
-  <script>
-    const socket = io();
-    let currentWinners = {};
-    let currentLeaderboard = [];
-
-    socket.on("INIT", (payload) => {
-      currentWinners = payload.winners || {};
-      currentLeaderboard = payload.leaderboard || [];
-
-      renderWinnerTicker();
-      renderLeaderboardTicker(currentLeaderboard, true);
-    });
-
-    socket.on("LEADERBOARD", (payload) => {
-      currentLeaderboard = payload.data || [];
-      renderLeaderboardTicker(currentLeaderboard, payload.started);
-    });
-
-    socket.on("WINNER", (data) => {
-      const cat = data.category.replace(/\s+\(TIE!\)$/, "");
-      currentWinners[cat] = Array.isArray(data.winners)
-        ? data.winners
-        : [data.winner];
-
-      renderWinnerTicker();
-    });
-
-    socket.on("UNDO_WINNER", (data) => {
-      const cat = data.category.replace(/\s+\(TIE!\)$/, "");
-      delete currentWinners[cat];
-      renderWinnerTicker();
-    });
-
-    socket.on("RESET", () => {
-      currentWinners = {};
-      currentLeaderboard = [];
-      renderWinnerTicker();
-      renderLeaderboardTicker([], false);
-    });
-
-    /* ------------------ FIXED ANIMATION ------------------ */
-
-    function applyTickerAnimation(track) {
-      if (!track) return;
-
-      track.style.animation = "none";
-      void track.offsetHeight;
-
-      const fullHeight = track.scrollHeight / 2;
-
-      track.style.setProperty("--scroll-distance", fullHeight + "px");
-
-      const speed = 40;
-      const duration = fullHeight / speed;
-
-      track.style.animation = `tickerScroll ${duration}s linear infinite`;
-    }
-
-    /* ------------------ LEFT TICKER ------------------ */
-
-    function renderWinnerTicker() {
-      const track = document.getElementById("winnerTickerTrack");
-
-      const categories = Object.keys(currentWinners);
-
-      if (categories.length === 0) {
-        track.innerHTML = "";
-        track.style.animation = "none";
-        return;
-      }
-
-      const singleSet = categories.map((cat) => {
-        const winners = currentWinners[cat] || [];
-        return `
-          <div class="ticker-item">
-            <div class="ticker-category">${cat}</div>
-            ${winners.map(w => `<div class="ticker-winner">${w}</div>`).join("")}
-          </div>
-        `;
-      }).join("");
-
-      track.innerHTML = singleSet + singleSet;
-
-      applyTickerAnimation(track);
-    }
-
-    /* ------------------ RIGHT TICKER ------------------ */
-
-    function renderLeaderboardTicker(data, started) {
-      const track = document.getElementById("leaderboardTickerTrack");
-
-      if (!started || !data.length) {
-        track.innerHTML = "";
-        track.style.animation = "none";
-        return;
-      }
-
-      const singleSet = data.map((p, i) => `
-        <div class="ticker-item">
-          <div class="ticker-line">
-            <span class="ticker-rank">#${i + 1}</span>
-            <span class="ticker-name">${p.name}</span>
-            <span class="ticker-points">${p.score}</span>
-          </div>
-        </div>
-      `).join("");
-
-      track.innerHTML = singleSet + singleSet;
-
-      applyTickerAnimation(track);
-    }
-  </script>
+</script>
 </body>
 </html>
