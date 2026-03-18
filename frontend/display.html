@@ -276,23 +276,34 @@ function showOverlay(data){
 
   const overlay = document.getElementById("winnerOverlay");
 
-  document.getElementById("overlayCategory").textContent = data.category;
+  const categoryEl = document.getElementById("overlayCategory");
+  const winnerEl = document.getElementById("overlayWinner");
+  const mostEl = document.getElementById("overlayMost");
 
-  const winners = Array.isArray(data.winners)
-    ? data.winners
-    : [data.winner];
+  categoryEl.textContent = data?.category || "";
 
-  document.getElementById("overlayWinner").innerHTML =
-    winners.map(w=>`<div>${w}</div>`).join("");
+  /* ✅ ALWAYS normalize winners */
+  let winners = [];
 
-  document.getElementById("overlayMost").textContent =
-    data.mostChosen || "N/A";
+  if(Array.isArray(data?.winners)){
+    winners = data.winners;
+  } else if(data?.winner){
+    winners = [data.winner];
+  }
+
+  /* ✅ FORCE visible content */
+  winnerEl.innerHTML = winners.length
+    ? winners.map(w => `<div class="winner-line">${w}</div>`).join("")
+    : "<div class='winner-line'>—</div>";
+
+  mostEl.textContent = data?.mostChosen || "N/A";
 
   overlay.style.display = "block";
 
-  requestAnimationFrame(()=>{
-    fitOverlayText(); // 🔥 FIXED
-  });
+  /* 🔥 DELAY ensures DOM is rendered BEFORE scaling */
+  setTimeout(()=>{
+    fitOverlayText();
+  },50);
 
   launchConfetti();
 
@@ -320,7 +331,6 @@ function launchConfetti(){
 
 
 /* ---------------- TEXT SCALING (FIXED) ---------------- */
-
 function fitOverlayText(){
 
   const box = document.getElementById("overlayContent");
@@ -328,13 +338,21 @@ function fitOverlayText(){
   const winner = document.getElementById("overlayWinner");
   const most = document.getElementById("overlayMost");
 
-  let cat = 50;
-  let win = 100;
+  if(!box) return;
+
+  let cat = 60;
+  let win = 120;
   let mst = 70;
 
   let guard = 0;
 
-  while(box.scrollHeight < box.clientHeight * 0.92 && guard < 200){
+  /* reset */
+  category.style.fontSize = cat + "px";
+  winner.style.fontSize = win + "px";
+  most.style.fontSize = mst + "px";
+
+  /* 🔥 grow */
+  while(box.scrollHeight < box.clientHeight * 0.9 && guard < 300){
 
     cat += 2;
     win += 4;
@@ -347,7 +365,8 @@ function fitOverlayText(){
     guard++;
   }
 
-  while(box.scrollHeight > box.clientHeight * 0.95 && guard < 400){
+  /* 🔥 shrink if needed */
+  while(box.scrollHeight > box.clientHeight * 0.95 && guard < 600){
 
     cat -= 2;
     win -= 4;
@@ -359,7 +378,14 @@ function fitOverlayText(){
 
     guard++;
   }
+
+  /* ✅ APPLY SIZE TO CHILD LINES (THIS WAS MISSING) */
+  const lines = winner.querySelectorAll(".winner-line");
+  lines.forEach(el=>{
+    el.style.fontSize = win + "px";
+  });
 }
+
 </script>
 
 </body>
