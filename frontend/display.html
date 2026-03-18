@@ -27,422 +27,118 @@
     </div>
   </div>
 
-  <div id="winnerOverlay">
-    <div class="overlay-content" id="overlayContent">
-      <div id="overlayTopGroup">
-        <div id="overlayCategory"></div>
-
-        <div class="overlay-section-title" id="winnerTitle">Winner</div>
-        <div id="overlayWinner"></div>
-      </div>
-
-      <div id="overlayBottomGroup">
-        <div class="overlay-section-title" id="mostTitle">Most Chosen</div>
-        <div id="overlayMost"></div>
-      </div>
-    </div>
-  </div>
-
   <script src="/socket.io/socket.io.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <script>
     const socket = io();
-    let dotCount = 0;
-    let overlayTimer = null;
     let currentWinners = {};
     let currentLeaderboard = [];
-    let lastLeaderName = null;
-    let lastLeaderScore = null;
-
-    setInterval(() => {
-      const dots = document.getElementById("dots");
-      if (!dots) return;
-      dotCount = (dotCount + 1) % 4;
-      dots.textContent = ".".repeat(dotCount);
-    }, 500);
 
     socket.on("INIT", (payload) => {
-      if (!payload) return;
-
-      currentWinners = {};
+      currentWinners = payload.winners || {};
       currentLeaderboard = payload.leaderboard || [];
 
-      Object.entries(payload.winners || {}).forEach(([category, value]) => {
-        if (Array.isArray(value)) {
-          if (value.length > 0) currentWinners[category] = value;
-        } else if (value) {
-          currentWinners[category] = [value];
-        }
-      });
-
       renderWinnerTicker();
-
-      const started = Object.keys(currentWinners).length > 0;
-      renderLeaderboardTicker(currentLeaderboard, started);
-
-      if (started) {
-        renderLeaderboard(currentLeaderboard);
-      } else {
-        showTabulating();
-      }
-    });
-
-    socket.on("LEADERBOARD", (payload) => {
-      if (!payload) return;
-
-      currentLeaderboard = payload.data || [];
-
-      if (!payload.started) {
-        renderLeaderboardTicker([], false);
-        showTabulating();
-        return;
-      }
-
-      renderLeaderboard(currentLeaderboard);
       renderLeaderboardTicker(currentLeaderboard, true);
     });
 
-    socket.on("WINNER", (data) => {
-      if (data?.category) {
-        const cleanCategory = String(data.category).replace(/\s+\(TIE!\)$/, "");
-        currentWinners[cleanCategory] = Array.isArray(data.winners)
-          ? data.winners
-          : [data.winner].filter(Boolean);
-        renderWinnerTicker();
-      }
+    socket.on("LEADERBOARD", (payload) => {
+      currentLeaderboard = payload.data || [];
+      renderLeaderboardTicker(currentLeaderboard, payload.started);
+    });
 
-      showOverlay(data);
-      launchConfetti();
+    socket.on("WINNER", (data) => {
+      const cat = data.category.replace(/\s+\(TIE!\)$/, "");
+      currentWinners[cat] = Array.isArray(data.winners)
+        ? data.winners
+        : [data.winner];
+
+      renderWinnerTicker();
     });
 
     socket.on("UNDO_WINNER", (data) => {
-      if (data?.category) {
-        const cleanCategory = String(data.category).replace(/\s+\(TIE!\)$/, "");
-        delete currentWinners[cleanCategory];
-        renderWinnerTicker();
-      }
+      const cat = data.category.replace(/\s+\(TIE!\)$/, "");
+      delete currentWinners[cat];
+      renderWinnerTicker();
     });
 
     socket.on("RESET", () => {
       currentWinners = {};
       currentLeaderboard = [];
-      lastLeaderName = null;
-      lastLeaderScore = null;
-
       renderWinnerTicker();
       renderLeaderboardTicker([], false);
-
-      showTabulating();
-      const div = document.getElementById("leaderboard");
-      if (div) div.innerHTML = "";
-      const overlay = document.getElementById("winnerOverlay");
-      if (overlay) overlay.style.display = "none";
     });
 
-    window.addEventListener("resize", () => {
-      const overlay = document.getElementById("winnerOverlay");
-      if (overlay && overlay.style.display === "block") {
-        fitOverlayText();
-      }
+    /* ------------------ FIXED ANIMATION ------------------ */
 
-      renderWinnerTicker();
-      renderLeaderboardTicker(
-        currentLeaderboard,
-        Object.keys(currentWinners).length > 0
-      );
-    });
-
-    function showTabulating() {
-      const tab = document.getElementById("tabulatingMessage");
-      const div = document.getElementById("leaderboard");
-      if (tab) tab.style.display = "block";
-      if (div) div.innerHTML = "";
-    }
-
-    function renderLeaderboard(data) {
-      const tab = document.getElementById("tabulatingMessage");
-      if (tab) tab.style.display = "none";
-
-      const div = document.getElementById("leaderboard");
-      if (!div) return;
-      div.innerHTML = "";
-
-      if (!data || data.length === 0) return;
-
-      const grouped = {};
-      data.forEach((player) => {
-        const score = Number(player.score) || 0;
-        if (!grouped[score]) grouped[score] = [];
-        grouped[score].push(player.name);
-      });
-
-      const scores = Object.keys(grouped)
-        .map(Number)
-        .sort((a, b) => b - a);
-
-      const currentTopScore = scores.length > 0 ? scores[0] : null;
-      const currentTopNames = currentTopScore !== null ? grouped[currentTopScore] || [] : [];
-      const leaderSignature = `${currentTopScore}|${[...currentTopNames].sort().join("|")}`;
-      const previousLeaderSignature = `${lastLeaderScore}|${lastLeaderName || ""}`;
-      const shouldAnimateLeader = leaderSignature !== previousLeaderSignature;
-
-      if (currentTopNames.length === 1) {
-        lastLeaderName = currentTopNames[0];
-      } else {
-        lastLeaderName = [...currentTopNames].sort().join("|");
-      }
-      lastLeaderScore = currentTopScore;
-
-      let rank = 1;
-      let visibleLines = 0;
-      const maxLines = 5;
-
-      scores.forEach((score) => {
-        if (visibleLines >= maxLines) return;
-
-        const players = grouped[score];
-        const currentRank = rank;
-        const leaderClass =
-          currentRank === 1 && shouldAnimateLeader ? "entry leader" : "entry";
-
-        if (players.length > 3) {
-          if (visibleLines < maxLines) {
-            div.innerHTML += `
-              <div class="${leaderClass}">
-                <span class="rank">#${currentRank}</span>
-                <span>${players.length} people tied</span>
-                <span> ${score}</span>
-              </div>
-            `;
-            visibleLines += 1;
-          }
-        } else if (players.length === 1) {
-          if (visibleLines < maxLines) {
-            div.innerHTML += `
-              <div class="${leaderClass}">
-                <span class="rank">#${currentRank}</span>
-                <span>${players[0]}</span>
-                <span> ${score}</span>
-              </div>
-            `;
-            visibleLines += 1;
-          }
-        } else {
-          players.forEach((name, index) => {
-            if (visibleLines >= maxLines) return;
-
-            div.innerHTML += `
-              <div class="${leaderClass} tie-line ${index > 0 ? "tie-subline" : ""}">
-                <span class="rank">${index === 0 ? "#" + currentRank : ""}</span>
-                <span>${name}</span>
-                <span> ${score}</span>
-              </div>
-            `;
-
-            visibleLines += 1;
-          });
-        }
-
-        rank += players.length;
-      });
-    }
-
-    function applyTickerAnimation(track, itemCount) {
+    function applyTickerAnimation(track) {
       if (!track) return;
 
       track.style.animation = "none";
       void track.offsetHeight;
 
-      const duration = Math.max(18, itemCount * 4);
+      const fullHeight = track.scrollHeight / 2;
+
+      track.style.setProperty("--scroll-distance", fullHeight + "px");
+
+      const speed = 40;
+      const duration = fullHeight / speed;
+
       track.style.animation = `tickerScroll ${duration}s linear infinite`;
     }
 
+    /* ------------------ LEFT TICKER ------------------ */
+
     function renderWinnerTicker() {
-      const ticker = document.getElementById("winnerTicker");
       const track = document.getElementById("winnerTickerTrack");
-      if (!ticker || !track) return;
 
       const categories = Object.keys(currentWinners);
 
       if (categories.length === 0) {
         track.innerHTML = "";
         track.style.animation = "none";
-        ticker.style.display = "none";
         return;
       }
 
-      ticker.style.display = "block";
-
-      const singleSet = categories.map((category) => {
-        const winnerList = currentWinners[category] || [];
-        const winnerHtml = winnerList
-          .map(name => `<div class="ticker-winner">${name}</div>`)
-          .join("");
-
+      const singleSet = categories.map((cat) => {
+        const winners = currentWinners[cat] || [];
         return `
           <div class="ticker-item">
-            <div class="ticker-category">${category}</div>
-            ${winnerHtml}
+            <div class="ticker-category">${cat}</div>
+            ${winners.map(w => `<div class="ticker-winner">${w}</div>`).join("")}
           </div>
         `;
       }).join("");
 
       track.innerHTML = singleSet + singleSet;
-      applyTickerAnimation(track, categories.length);
+
+      applyTickerAnimation(track);
     }
 
-    function renderLeaderboardTicker(data, started) {
-      const ticker = document.getElementById("leaderboardTicker");
-      const track = document.getElementById("leaderboardTickerTrack");
-      if (!ticker || !track) return;
+    /* ------------------ RIGHT TICKER ------------------ */
 
-      if (!started || !data || data.length === 0) {
+    function renderLeaderboardTicker(data, started) {
+      const track = document.getElementById("leaderboardTickerTrack");
+
+      if (!started || !data.length) {
         track.innerHTML = "";
         track.style.animation = "none";
-        ticker.style.display = "none";
         return;
       }
 
-      ticker.style.display = "block";
-
-      const singleSet = data.map((player, index) => {
-        return `
-          <div class="ticker-item leaderboard-ticker-item">
-            <div class="ticker-line">
-              <span class="ticker-rank">#${index + 1}</span>
-              <span class="ticker-name">${player.name}</span>
-              <span class="ticker-points">${player.score}</span>
-            </div>
+      const singleSet = data.map((p, i) => `
+        <div class="ticker-item">
+          <div class="ticker-line">
+            <span class="ticker-rank">#${i + 1}</span>
+            <span class="ticker-name">${p.name}</span>
+            <span class="ticker-points">${p.score}</span>
           </div>
-        `;
-      }).join("");
+        </div>
+      `).join("");
 
       track.innerHTML = singleSet + singleSet;
-      applyTickerAnimation(track, data.length);
-    }
 
-    function showOverlay(data) {
-      const overlay = document.getElementById("winnerOverlay");
-      if (!overlay) return;
-
-      document.getElementById("overlayCategory").textContent = data?.category || "";
-
-      const winnerBox = document.getElementById("overlayWinner");
-      const winners = Array.isArray(data?.winners)
-        ? data.winners
-        : [data?.winner].filter(Boolean);
-
-      winnerBox.innerHTML = winners.map(name => `<div>${name}</div>`).join("");
-
-      document.getElementById("overlayMost").textContent = data?.mostChosen || "N/A";
-
-      overlay.style.display = "block";
-
-      requestAnimationFrame(() => {
-        fitOverlayText();
-      });
-
-      if (overlayTimer) clearTimeout(overlayTimer);
-      overlayTimer = setTimeout(() => {
-        overlay.style.display = "none";
-      }, 10000);
-    }
-
-    function fitSection(groupEl, items, maxHeight, minSizes, maxSizes, stepSizes) {
-      items.forEach((item, i) => {
-        item.style.fontSize = minSizes[i] + "px";
-        item.style.maxWidth = "92%";
-        item.style.lineHeight = "1.05";
-      });
-
-      let guard = 0;
-
-      while (groupEl.scrollHeight < maxHeight && guard < 300) {
-        let changed = false;
-
-        items.forEach((item, i) => {
-          const current = parseFloat(item.style.fontSize);
-          if (current < maxSizes[i]) {
-            item.style.fontSize = Math.min(maxSizes[i], current + stepSizes[i]) + "px";
-            changed = true;
-          }
-        });
-
-        if (!changed) break;
-        guard++;
-      }
-
-      while (groupEl.scrollHeight > maxHeight && guard < 600) {
-        items.forEach((item, i) => {
-          const current = parseFloat(item.style.fontSize);
-          item.style.fontSize = Math.max(minSizes[i], current - 1) + "px";
-        });
-        guard++;
-      }
-    }
-
-    function fitOverlayText() {
-      const box = document.getElementById("overlayContent");
-      const topGroup = document.getElementById("overlayTopGroup");
-      const bottomGroup = document.getElementById("overlayBottomGroup");
-
-      const category = document.getElementById("overlayCategory");
-      const winnerTitle = document.getElementById("winnerTitle");
-      const winner = document.getElementById("overlayWinner");
-
-      const mostTitle = document.getElementById("mostTitle");
-      const most = document.getElementById("overlayMost");
-
-      if (!box || !topGroup || !bottomGroup || !category || !winnerTitle || !winner || !mostTitle || !most) return;
-
-      const totalHeight = box.clientHeight;
-      const topMaxHeight = totalHeight * 0.58;
-      const bottomMaxHeight = totalHeight * 0.28;
-
-      fitSection(
-        topGroup,
-        [category, winnerTitle, winner],
-        topMaxHeight,
-        [36, 24, 40],
-        [90, 54, 130],
-        [2, 1, 3]
-      );
-
-      fitSection(
-        bottomGroup,
-        [mostTitle, most],
-        bottomMaxHeight,
-        [24, 34],
-        [54, 110],
-        [1, 3]
-      );
-    }
-
-    function launchConfetti() {
-      const end = Date.now() + 10000;
-
-      (function frame() {
-        confetti({
-          particleCount: 6,
-          angle: 60,
-          spread: 70,
-          origin: { x: 0 },
-          zIndex: 9999
-        });
-
-        confetti({
-          particleCount: 6,
-          angle: 120,
-          spread: 70,
-          origin: { x: 1 },
-          zIndex: 9999
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      })();
+      applyTickerAnimation(track);
     }
   </script>
 </body>
