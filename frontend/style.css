@@ -1,5 +1,5 @@
 /* ------------------------------------------------ */
-/* GLOBAL PAGE STYLE */
+/* GLOBAL */
 /* ------------------------------------------------ */
 
 body{
@@ -10,9 +10,9 @@ body{
   background-attachment:fixed;
 
   font-family:Arial, Helvetica, sans-serif;
-  text-align:center;
-  overflow:hidden;
   margin:0;
+  overflow:hidden;
+  text-align:center;
 }
 
 
@@ -27,18 +27,16 @@ body{
   transform:translate(-50%,-50%);
 
   font-size:60px;
-
   color:#d4af37;
 
   text-shadow:
-  0 0 8px rgba(255,215,0,0.8),
-  0 0 16px rgba(255,215,0,0.6),
-  0 0 30px rgba(255,215,0,0.4);
+  0 0 10px rgba(255,215,0,0.8),
+  0 0 20px rgba(255,215,0,0.6);
 }
 
 
 /* ------------------------------------------------ */
-/* LEFT + RIGHT TICKERS */
+/* TICKERS */
 /* ------------------------------------------------ */
 
 #winnerTicker,
@@ -50,37 +48,31 @@ body{
   width:320px;
   height:70vh;
 
-  background:rgba(0,0,0,0.65);
-  border:2px solid rgba(212,175,55,0.8);
+  background:rgba(0,0,0,0.7);
+  border:2px solid #d4af37;
   border-radius:18px;
 
-  overflow:hidden;
   display:flex;
   flex-direction:column;
+  overflow:hidden;
 }
 
-/* positioning */
 #winnerTicker{ left:2%; }
 #leaderboardTicker{ right:2%; }
 
 
-/* HEADER (STATIC) */
+/* HEADER (LOCKED) */
 
 .ticker-header{
-  flex:0 0 auto;
+  flex-shrink:0;
 
   font-size:22px;
   font-weight:bold;
-  text-align:center;
+  padding:12px;
 
   color:#d4af37;
 
-  padding:12px 8px;
-
-  border-bottom:1px solid rgba(212,175,55,0.4);
-
-  text-shadow:
-  0 0 6px rgba(255,215,0,0.7);
+  border-bottom:1px solid rgba(212,175,55,0.5);
 }
 
 
@@ -100,7 +92,7 @@ body{
 }
 
 
-/* LEFT TICKER CONTENT */
+/* LEFT CONTENT */
 
 .ticker-category{
   font-size:18px;
@@ -115,14 +107,14 @@ body{
 }
 
 
-/* RIGHT TICKER CONTENT */
+/* RIGHT CONTENT (FIXED COLOR) */
 
 .lb-row{
   display:flex;
   justify-content:space-between;
 
   font-size:17px;
-  color:#ffd700;
+  color:#ffd700; /* 🔥 FIXED */
 }
 
 
@@ -136,109 +128,74 @@ body{
   left:50%;
   transform:translate(-50%,-50%);
 
-  font-size:72px; /* 🔥 restored large size */
+  font-size:72px;
 
   display:flex;
   flex-direction:column;
   align-items:center;
 }
 
-
-/* entries */
-
 .entry{
   margin:8px 0;
   color:#d4af37;
   font-weight:bold;
-
-  text-shadow:
-  0 0 8px rgba(255,215,0,0.8),
-  0 0 16px rgba(255,215,0,0.6);
 }
-
-
-/* ties */
-
-.tie-line{
-  margin:2px 0;
-  line-height:0.95;
-}
-
-.tie-subline{
-  margin-top:6px;
-}
-
-
-/* rank */
 
 .rank{
-  display:inline-block;
-  min-width:80px;
-  text-align:right;
   margin-right:18px;
-
-  color:#d4af37;
 }
 
 
 /* ------------------------------------------------ */
-/* WINNER POPUP */
+/* POPUP */
 /* ------------------------------------------------ */
 
 #winnerOverlay{
   position:fixed;
-  top:8%;
-  left:8%;
-  width:84%;
-  height:84%;
-  z-index:2000;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%); /* 🔥 TRUE CENTER */
+
+  width:84vw;
+  height:84vh;
+
   display:none;
+  z-index:2000;
 }
 
 .overlay-content{
   width:100%;
   height:100%;
 
-  background:rgba(0,0,0,0.92);
+  background:rgba(0,0,0,0.95);
   border:4px solid #d4af37;
   border-radius:24px;
 
-  padding:3%;
-
   display:flex;
   flex-direction:column;
-  justify-content:space-evenly;
+  justify-content:center;
   align-items:center;
 
-  box-shadow:
-  0 0 25px rgba(255,215,0,0.7);
-
-  overflow:hidden;
+  padding:4%;
+  box-sizing:border-box;
 }
 
 
-/* TEXT (JS CONTROLS SIZE) */
+/* ------------------------------------------------ */
+/* POPUP TEXT (JS CONTROLS SIZE) */
+/* ------------------------------------------------ */
 
 #overlayCategory,
 #overlayWinner,
 #overlayMost{
-  font-size:20px;
+  font-size:20px; /* JS will override */
   font-weight:bold;
   color:#ffd700;
-
-  text-shadow:
-  0 0 10px rgba(255,215,0,0.9);
+  text-align:center;
 }
 
 .overlay-section-title{
   font-size:22px;
   text-decoration:underline;
   color:#d4af37;
-}
-
-
-/* spacing for multiple winners */
-
-#overlayWinner div{
-  margin:6px 0;
 }
