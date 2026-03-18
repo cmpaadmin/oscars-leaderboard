@@ -139,11 +139,9 @@ overflow:hidden;
 /* ------------------------------------------------ */
 
 .ticker-window{
-
 flex:1;
 overflow:hidden;
 position:relative;
-
 }
 
 
@@ -170,10 +168,8 @@ animation:tickerScroll linear infinite;
 /* ------------------------------------------------ */
 
 .ticker-item{
-
 width:100%;
 margin-bottom:26px;
-
 }
 
 
@@ -184,10 +180,8 @@ margin-bottom:26px;
 .ticker-category{
 
 font-size:clamp(16px, 1.5vw, 24px);
-
 font-weight:bold;
 text-decoration:underline;
-
 margin-bottom:8px;
 
 color:#d4af37;
@@ -208,9 +202,7 @@ word-break:break-word;
 .ticker-winner{
 
 font-size:clamp(15px, 1.35vw, 22px);
-
 line-height:1.15;
-
 margin:2px 0;
 
 color:#ffd700;
@@ -244,34 +236,22 @@ text-shadow:
 
 }
 
-
 .ticker-rank{
-
 min-width:40px;
 text-align:left;
-
 color:#d4af37;
-
 font-weight:bold;
-
 }
-
 
 .ticker-name{
-
 flex:1;
 text-align:left;
-
 padding-left:8px;
-
 }
 
-
 .ticker-points{
-
 text-align:right;
 min-width:40px;
-
 }
 
 
@@ -366,6 +346,21 @@ text-shadow:
 
 
 /* ------------------------------------------------ */
+/* LEADER (NO ANIMATION) */
+/* ------------------------------------------------ */
+
+.leader{
+
+color:#ffd700;
+
+text-shadow:
+0 0 12px gold,
+0 0 24px gold;
+
+}
+
+
+/* ------------------------------------------------ */
 /* ENTRY ANIMATION */
 /* ------------------------------------------------ */
 
@@ -381,38 +376,6 @@ transform:translateY(0);
 opacity:1;
 }
 
-}
-
-
-/* ------------------------------------------------ */
-/* LEADER ANIMATION */
-/* ------------------------------------------------ */
-
-.leader{
-animation:leaderGlow 1.5s ease;
-}
-
-/* glow only — NO scale */
-@keyframes leaderGlow{
-
-0%{
-text-shadow:
-0 0 6px rgba(255,215,0,0.6),
-0 0 12px rgba(255,215,0,0.4);
-}
-
-50%{
-text-shadow:
-0 0 12px gold,
-0 0 24px gold,
-0 0 40px gold;
-}
-
-100%{
-text-shadow:
-0 0 6px rgba(255,215,0,0.6),
-0 0 12px rgba(255,215,0,0.4);
-}
 }
 
 
@@ -466,7 +429,6 @@ color:#ffd700;
 overflow:hidden;
 
 }
-
 
 #overlayTopGroup,
 #overlayBottomGroup{
