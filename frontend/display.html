@@ -31,7 +31,8 @@
 
 <script>
 const socket = io();
-
+let lastWinnerHTML = "";
+let lastLeaderboardHTML = "";
 let currentWinners = {};
 let currentLeaderboard = [];
 
@@ -87,18 +88,27 @@ socket.on("RESET",()=>{
 /* ---------------- MASTER UI ---------------- */
 
 function updateUI(){
+
   const started = Object.keys(currentWinners).length > 0;
+
+  const tab = document.getElementById("tabulatingMessage");
+  const board = document.getElementById("leaderboard");
+
+  if(!started){
+    tab.style.display = "block";
+    board.innerHTML = "";
+  } else {
+    tab.style.display = "none";
+    renderLeaderboard(); // 🔥 restore leaderboard
+  }
 
   document.getElementById("winnerTicker").style.display = started ? "block" : "none";
   document.getElementById("leaderboardTicker").style.display = started ? "block" : "none";
 
-  if(!started){
-    document.getElementById("leaderboard").innerHTML="";
-    return;
+  if(started){
+    renderWinnerTicker();
+    renderLeaderboardTicker();
   }
-
-  renderWinnerTicker();
-  renderLeaderboardTicker();
 }
 
 
@@ -158,6 +168,10 @@ function renderWinnerTicker(){
     `;
   }).join("");
 
+  if(html === lastWinnerHTML) return; // 🔥 prevents reset
+
+  lastWinnerHTML = html;
+
   track.innerHTML = html + html;
 
   startScroll(track,"left");
@@ -186,11 +200,37 @@ function renderLeaderboardTicker(){
     </div>
   `).join("");
 
+  if(html === lastLeaderboardHTML) return; // 🔥 THIS FIXES RESET
+
+  lastLeaderboardHTML = html;
+
   track.innerHTML = html + html;
 
   startScroll(track,"right");
 }
 
+  function renderLeaderboard(){
+
+  const div = document.getElementById("leaderboard");
+  if(!div) return;
+
+  div.innerHTML = "";
+
+  const data = currentLeaderboard;
+  if(!data || data.length === 0) return;
+
+  const top5 = data.slice(0,5);
+
+  top5.forEach((p,i)=>{
+    div.innerHTML += `
+      <div class="entry ${i===0 ? "leader":""}">
+        <span class="rank">#${i+1}</span>
+        <span>${p.name}</span>
+        <span> ${p.score}</span>
+      </div>
+    `;
+  });
+}
 </script>
 </body>
 </html>
