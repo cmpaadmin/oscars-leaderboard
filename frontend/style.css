@@ -113,8 +113,12 @@ body{
   display:flex;
   justify-content:space-between;
 
-  font-size:17px;
-  color:#ffd700; /* 🔥 FIXED */
+  font-size:18px;
+
+  color:#ffd700 !important;   /* 🔥 force gold */
+  text-shadow:
+    0 0 6px rgba(255,215,0,0.7),
+    0 0 12px rgba(255,215,0,0.4);
 }
 
 
