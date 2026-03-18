@@ -295,9 +295,9 @@ function showOverlay(data){
 
   overlay.style.display = "block";
 
-  setTimeout(()=>{
-    fitOverlayText();
-  },150);
+requestAnimationFrame(()=>{
+  setTimeout(fitOverlayText, 50);
+});
 
   launchConfetti();
 
