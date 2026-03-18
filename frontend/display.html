@@ -365,6 +365,43 @@ function launchConfetti(){
   })();
 }
 
+  function fitOverlayText(){
+
+  const box = document.getElementById("overlayContent");
+  const category = document.getElementById("overlayCategory");
+  const winner = document.getElementById("overlayWinner");
+  const most = document.getElementById("overlayMost");
+
+  if(!box || !category || !winner || !most) return;
+
+  const elements = [category, winner, most];
+
+  /* reset sizes */
+  elements.forEach(el=>{
+    el.style.fontSize = "20px";
+    el.style.lineHeight = "1.1";
+  });
+
+  let size = 20;
+  let maxSize = 300;
+
+  while(size < maxSize){
+
+    elements.forEach(el=>{
+      el.style.fontSize = size + "px";
+    });
+
+    if(box.scrollHeight > box.clientHeight * 0.92){
+      size--;
+      elements.forEach(el=>{
+        el.style.fontSize = size + "px";
+      });
+      break;
+    }
+
+    size += 2;
+  }
+}
 </script>
 
 </body>
