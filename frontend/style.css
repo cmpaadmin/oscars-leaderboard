@@ -205,3 +205,8 @@ body{
   margin:10px 0;
   color:#ffd700;
 }
+.overlay-section-title{
+  font-size:42px;
+  margin:10px 0;
+  flex-shrink:0; /* 🔥 prevents disappearing */
+}
