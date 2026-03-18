@@ -146,16 +146,67 @@ function renderLeaderboard(){
   const data = currentLeaderboard;
   if(!data || data.length === 0) return;
 
-  const top5 = data.slice(0,5);
+  /* group by score */
+  const grouped = {};
+  data.forEach(p=>{
+    if(!grouped[p.score]) grouped[p.score] = [];
+    grouped[p.score].push(p.name);
+  });
 
-  top5.forEach((p,i)=>{
-    div.innerHTML += `
-      <div class="entry">
-        <span class="rank">#${i+1}</span>
-        <span>${p.name}</span>
-        <span> ${p.score}</span>
-      </div>
-    `;
+  /* sort scores high → low */
+  const scores = Object.keys(grouped)
+    .map(Number)
+    .sort((a,b)=>b-a);
+
+  let rank = 1;
+  let visibleLines = 0;
+  const maxLines = 5;
+
+  scores.forEach(score=>{
+
+    if(visibleLines >= maxLines) return;
+
+    const players = grouped[score];
+
+    /* CASE 1: 4+ tied → collapse */
+    if(players.length > 3){
+
+      div.innerHTML += `
+        <div class="entry">
+          <span class="rank">#${rank}</span>
+          <span>${players.length} people tied</span>
+          <span> ${score}</span>
+        </div>
+      `;
+
+      visibleLines += 1;
+
+    }
+
+    /* CASE 2: 1–3 tied → list individually SAME rank */
+    else{
+
+      players.forEach((name, index)=>{
+
+        if(visibleLines >= maxLines) return;
+
+        div.innerHTML += `
+          <div class="entry tie-line ${index>0 ? "tie-subline":""}">
+            <span class="rank">${index===0 ? "#" + rank : ""}</span>
+            <span>${name}</span>
+            <span> ${score}</span>
+          </div>
+        `;
+
+        visibleLines += 1;
+
+      });
+
+    }
+
+    /* advance rank correctly */
+    rank += players.length;
+
   });
 }
 
