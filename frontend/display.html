@@ -27,18 +27,38 @@
   </div>
 </div>
 
+<div id="winnerOverlay">
+  <div class="overlay-content" id="overlayContent">
+    <div id="overlayTopGroup">
+      <div id="overlayCategory"></div>
+
+      <div class="overlay-section-title">Winner</div>
+      <div id="overlayWinner"></div>
+    </div>
+
+    <div id="overlayBottomGroup">
+      <div class="overlay-section-title">Most Chosen</div>
+      <div id="overlayMost"></div>
+    </div>
+  </div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 <script>
+
 const socket = io();
-let lastWinnerHTML = "";
-let lastLeaderboardHTML = "";
+
 let currentWinners = {};
 let currentLeaderboard = [];
 
 let scrollIntervals = {};
+let lastWinnerHTML = "";
+let lastLeaderboardHTML = "";
 
-/* ---------------- DOTS FIX ---------------- */
+/* ---------------- TABULATING DOTS ---------------- */
+
 let dotCount = 0;
 setInterval(()=>{
   const d = document.getElementById("dots");
@@ -48,12 +68,11 @@ setInterval(()=>{
 },500);
 
 
-/* ---------------- SOCKET ---------------- */
+/* ---------------- SOCKET EVENTS ---------------- */
 
 socket.on("INIT",(payload)=>{
   currentWinners = payload.winners || {};
   currentLeaderboard = payload.leaderboard || [];
-
   updateUI();
 });
 
@@ -63,12 +82,15 @@ socket.on("LEADERBOARD",(payload)=>{
 });
 
 socket.on("WINNER",(data)=>{
+
   const cat = data.category.replace(/\s+\(TIE!\)$/,"");
+
   currentWinners[cat] = Array.isArray(data.winners)
     ? data.winners
     : [data.winner];
 
   updateUI();
+  showOverlay(data);
 });
 
 socket.on("UNDO_WINNER",(data)=>{
@@ -79,7 +101,7 @@ socket.on("UNDO_WINNER",(data)=>{
 
 socket.on("RESET",()=>{
   currentWinners = {};
-  currentLeaderboard = {};
+  currentLeaderboard = [];
   stopAllScroll();
   updateUI();
 });
@@ -99,7 +121,7 @@ function updateUI(){
     board.innerHTML = "";
   } else {
     tab.style.display = "none";
-    renderLeaderboard(); // 🔥 restore leaderboard
+    renderLeaderboard();
   }
 
   document.getElementById("winnerTicker").style.display = started ? "block" : "none";
@@ -112,7 +134,33 @@ function updateUI(){
 }
 
 
-/* ---------------- SCROLL ENGINE (NO CSS ANIMATION) ---------------- */
+/* ---------------- CENTER LEADERBOARD ---------------- */
+
+function renderLeaderboard(){
+
+  const div = document.getElementById("leaderboard");
+  if(!div) return;
+
+  div.innerHTML = "";
+
+  const data = currentLeaderboard;
+  if(!data || data.length === 0) return;
+
+  const top5 = data.slice(0,5);
+
+  top5.forEach((p,i)=>{
+    div.innerHTML += `
+      <div class="entry">
+        <span class="rank">#${i+1}</span>
+        <span>${p.name}</span>
+        <span> ${p.score}</span>
+      </div>
+    `;
+  });
+}
+
+
+/* ---------------- SCROLL ENGINE ---------------- */
 
 function startScroll(track,id){
 
@@ -121,7 +169,7 @@ function startScroll(track,id){
   let pos = 0;
 
   scrollIntervals[id] = setInterval(()=>{
-    pos += 0.5; // SPEED CONTROL
+    pos += 0.5;
 
     if(pos >= track.scrollHeight/2){
       pos = 0;
@@ -148,7 +196,6 @@ function stopAllScroll(){
 function renderWinnerTicker(){
 
   const track = document.getElementById("winnerTickerTrack");
-
   const cats = Object.keys(currentWinners);
 
   if(cats.length === 0){
@@ -168,7 +215,7 @@ function renderWinnerTicker(){
     `;
   }).join("");
 
-  if(html === lastWinnerHTML) return; // 🔥 prevents reset
+  if(html === lastWinnerHTML) return;
 
   lastWinnerHTML = html;
 
@@ -200,7 +247,7 @@ function renderLeaderboardTicker(){
     </div>
   `).join("");
 
-  if(html === lastLeaderboardHTML) return; // 🔥 THIS FIXES RESET
+  if(html === lastLeaderboardHTML) return;
 
   lastLeaderboardHTML = html;
 
@@ -209,28 +256,65 @@ function renderLeaderboardTicker(){
   startScroll(track,"right");
 }
 
-  function renderLeaderboard(){
 
-  const div = document.getElementById("leaderboard");
-  if(!div) return;
+/* ---------------- WINNER POPUP ---------------- */
 
-  div.innerHTML = "";
+function showOverlay(data){
 
-  const data = currentLeaderboard;
-  if(!data || data.length === 0) return;
+  const overlay = document.getElementById("winnerOverlay");
 
-  const top5 = data.slice(0,5);
+  document.getElementById("overlayCategory").textContent = data.category;
 
-  top5.forEach((p,i)=>{
-    div.innerHTML += `
-      <div class="entry ${i===0 ? "leader":""}">
-        <span class="rank">#${i+1}</span>
-        <span>${p.name}</span>
-        <span> ${p.score}</span>
-      </div>
-    `;
-  });
+  const winners = Array.isArray(data.winners)
+    ? data.winners
+    : [data.winner];
+
+  document.getElementById("overlayWinner").innerHTML =
+    winners.map(w=>`<div>${w}</div>`).join("");
+
+  document.getElementById("overlayMost").textContent =
+    data.mostChosen || "N/A";
+
+  overlay.style.display = "block";
+
+  launchConfetti();
+
+  setTimeout(()=>{
+    overlay.style.display = "none";
+  },10000);
 }
+
+
+/* ---------------- CONFETTI ---------------- */
+
+function launchConfetti(){
+
+  const end = Date.now() + 10000;
+
+  (function frame(){
+    confetti({
+      particleCount:6,
+      angle:60,
+      spread:70,
+      origin:{x:0},
+      zIndex:9999
+    });
+
+    confetti({
+      particleCount:6,
+      angle:120,
+      spread:70,
+      origin:{x:1},
+      zIndex:9999
+    });
+
+    if(Date.now() < end){
+      requestAnimationFrame(frame);
+    }
+  })();
+}
+
 </script>
+
 </body>
 </html>
