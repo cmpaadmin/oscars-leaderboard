@@ -183,7 +183,10 @@ body{
   padding:4%;
   box-sizing:border-box;
 }
-
+.winner-line{
+  display:block;
+  margin:8px 0;
+}
 
 /* ------------------------------------------------ */
 /* POPUP TEXT (JS CONTROLS SIZE) */
