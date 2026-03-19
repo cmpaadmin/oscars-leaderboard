@@ -1,241 +1,136 @@
-/* ------------------------------------------------ */
-/* GLOBAL */
-/* ------------------------------------------------ */
-
 body{
-  background-image:url("/images/background.jpg");
-  background-size:cover;
-  background-position:center;
-  background-repeat:no-repeat;
-  background-attachment:fixed;
-
-  font-family:Arial, Helvetica, sans-serif;
-  margin:0;
-  overflow:hidden;
-  text-align:center;
+background-image:url("/images/background.jpg");
+background-size:cover;
+background-position:center;
+background-repeat:no-repeat;
+background-attachment:fixed;
+font-family:Arial, Helvetica, sans-serif;
+text-align:center;
+overflow:hidden;
+margin:0;
 }
 
-
-/* ------------------------------------------------ */
 /* TABULATING */
-/* ------------------------------------------------ */
-
 #tabulatingMessage{
-  position:absolute;
-  top:53%;
-  left:50%;
-  transform:translate(-50%,-50%);
-
-  font-size:60px;
-  color:#d4af37;
-
-  text-shadow:
-  0 0 10px rgba(255,215,0,0.8),
-  0 0 20px rgba(255,215,0,0.6);
+position:absolute;
+top:53%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:54px;
+color:#d4af37;
+text-shadow:
+0 0 8px rgba(255,215,0,0.8),
+0 0 16px rgba(255,215,0,0.6);
 }
 
-
-/* ------------------------------------------------ */
 /* TICKERS */
-/* ------------------------------------------------ */
-
 #winnerTicker,
 #leaderboardTicker{
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-
-  width:320px;
-  height:70vh;
-
-  background:rgba(0,0,0,0.7);
-  border:2px solid #d4af37;
-  border-radius:18px;
-
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+width:320px;
+height:60vh;
+background:rgba(0,0,0,0.6);
+border:2px solid gold;
+border-radius:16px;
+overflow:hidden;
 }
 
 #winnerTicker{ left:2%; }
 #leaderboardTicker{ right:2%; }
 
-
-/* HEADER (LOCKED) */
-
 .ticker-header{
-  flex-shrink:0;
-
-  font-size:22px;
-  font-weight:bold;
-  padding:12px;
-
-  color:#d4af37;
-
-  border-bottom:1px solid rgba(212,175,55,0.5);
+font-size:28px;
+color:#ffd700;
+padding:10px;
+font-weight:bold;
+border-bottom:1px solid gold;
 }
 
-
-/* SCROLL AREA */
-
 .ticker-scroll{
-  flex:1;
-  overflow:hidden;
-  position:relative;
+height:calc(100% - 50px);
+overflow:hidden;
 }
 
 .ticker-track{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  padding:14px;
+position:relative;
 }
 
-
-/* LEFT CONTENT */
-
+.ticker-item{ margin:15px 0; }
 .ticker-category{
-  font-size:18px;
-  font-weight:bold;
-  text-decoration:underline;
-  color:#d4af37;
+font-size:20px;
+text-decoration:underline;
+color:#ffd700;
 }
-
 .ticker-winner{
-  font-size:17px;
-  color:#ffd700;
+font-size:18px;
+color:#ffd700;
 }
-
-
-/* RIGHT CONTENT (FIXED COLOR) */
 
 .lb-row{
-  display:flex;
-  justify-content:center;
-  gap:12px; /*controlled spacing instead */
-
-  font-size:18px;
-
-  color:#ffd700 !important;   /* 🔥 force gold */
-  text-shadow:
-    0 0 6px rgba(255,215,0,0.7),
-    0 0 12px rgba(255,215,0,0.4);
+display:flex;
+justify-content:space-between;
+padding:4px 12px;
+font-size:18px;
+color:#ffd700;
 }
 
-
-/* ------------------------------------------------ */
-/* CENTER LEADERBOARD */
-/* ------------------------------------------------ */
-
+/* LEADERBOARD */
 #leaderboard{
-  position:absolute;
-  top:55%;
-  left:50%;
-  transform:translate(-50%,-50%);
-
-  font-size:72px;
-
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+position:absolute;
+top:55%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:70px;
+color:#ffd700;
 }
 
-.entry{
-  margin:8px 0;
-  color:#d4af37;
-  font-weight:bold;
-}
+.entry{ margin:6px 0; }
+.tie-line{ margin:2px 0; }
+.tie-subline{ margin-top:4px; }
 
-.rank{
-  margin-right:18px;
-}
-
-
-/* ------------------------------------------------ */
 /* POPUP */
-/* ------------------------------------------------ */
-
 #winnerOverlay{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%); /* 🔥 TRUE CENTER */
-
-  width:84vw;
-  height:84vh;
-
-  display:none;
-  z-index:2000;
+position:fixed;
+top:8%;
+left:8%;
+width:84%;
+height:84%;
+display:none;
+z-index:2000;
 }
 
 .overlay-content{
-  position:relative; /* 🔥 REQUIRED */
-
-  width:100%;
-  height:100%;
-  box-sizing:border-box;
-
-  background:rgba(0,0,0,0.92);
-  border:4px solid #d4af37;
-  border-radius:24px;
-
-  padding:3% 4%;
-
-  display:flex;
-  flex-direction:column;
-  justify-content:space-evenly;
-  align-items:center;
-  text-align:center;
-
-  box-shadow:
-  0 0 20px rgba(255,215,0,0.8),
-  0 0 40px rgba(255,215,0,0.6),
-  0 0 60px rgba(255,215,0,0.4);
-
-  color:#ffd700;
-
-  overflow:hidden;
-
-  z-index:1; /* 🔥 IMPORTANT */
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.92);
+border:4px solid gold;
+border-radius:24px;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+gap:10px;
+color:#ffd700;
 }
 
+/* TEXT SIZES */
+#overlayCategory{
+font-size:72px;
+font-weight:bold;
+}
 
-/* ------------------------------------------------ */
-/* POPUP TEXT (FIXED + CLEAN) */
-/* ------------------------------------------------ */
+.overlay-section-title{
+font-size:56px;
+text-decoration:underline;
+}
 
-#overlayCategory,
 #overlayWinner,
-#overlayMost,
-.overlay-section-title{
-  position:relative;
-  z-index:2;
-
-  color:#ffd700 !important;
-
-  text-shadow:
-  0 0 10px rgba(255,215,0,0.9),
-  0 0 20px rgba(255,215,0,0.7),
-  0 0 40px rgba(255,215,0,0.5);
-
-  margin:6px 0;
-  line-height:1.1;
-
-  font-size:60px; /* 🔥 base size BEFORE scaling */
+#overlayMost{
+font-size:48px;
 }
 
-
-/* winner lines */
 .winner-line{
-  display:block;
-  margin:4px 0;
-  color:#ffd700;
-}
-
-
-/* titles (Winner / Most Chosen) */
-.overlay-section-title{
-  font-weight:bold;
-  text-decoration:underline;
-  flex-shrink:0;
+margin:4px 0;
 }
