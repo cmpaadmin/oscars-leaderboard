@@ -32,15 +32,15 @@
 
 <!-- POPUP -->
 <div id="winnerOverlay">
-  <div class="overlay-content" id="overlayContent">
+  <div class="overlay-content">
 
     <div id="overlayCategory"></div>
 
-   <div class="overlay-section-title" id="winnerTitle">Winner</div>
-<div id="overlayWinner"></div>
+    <div class="overlay-section-title">Winner</div>
+    <div id="overlayWinner"></div>
 
-<div class="overlay-section-title" id="mostTitle">Most Chosen</div>
-<div id="overlayMost"></div>
+    <div class="overlay-section-title">Most Chosen</div>
+    <div id="overlayMost"></div>
 
   </div>
 </div>
@@ -53,7 +53,6 @@ const socket = io();
 
 let currentWinners = {};
 let currentLeaderboard = [];
-
 let scrollIntervals = {};
 let lastLeaderboardHTML = "";
 
@@ -192,7 +191,6 @@ function renderLeaderboard(){
 /* ---------------- SCROLL ENGINE ---------------- */
 
 function startScroll(track,id){
-
   stopScroll(id);
 
   let pos = 0;
@@ -267,38 +265,25 @@ function renderLeaderboardTicker(){
 }
 
 
-/* ---------------- POPUP (FINAL FIX) ---------------- */
+/* ---------------- POPUP ---------------- */
 
 function showOverlay(data){
 
   const overlay = document.getElementById("winnerOverlay");
 
-  const categoryEl = document.getElementById("overlayCategory");
-  const winnerEl = document.getElementById("overlayWinner");
-  const mostEl = document.getElementById("overlayMost");
+  document.getElementById("overlayCategory").textContent = data?.category || "";
 
-  categoryEl.textContent = data?.category || "";
+  const winners = Array.isArray(data?.winners)
+    ? data.winners
+    : [data?.winner].filter(Boolean);
 
-  let winners = [];
+  document.getElementById("overlayWinner").innerHTML =
+    winners.map(w => `<div class="winner-line">${w}</div>`).join("");
 
-  if(Array.isArray(data?.winners) && data.winners.length){
-    winners = data.winners;
-  } else if(data?.winner){
-    winners = [data.winner];
-  }
-winnerEl.style.color = "#ffd700";
-mostEl.style.color = "#ffd700";
-  winnerEl.innerHTML = winners.length
-    ? winners.map(w => `<div class="winner-line">${w}</div>`).join("")
-    : `<div class="winner-line">No Winner</div>`;
-
-  mostEl.textContent = data?.mostChosen || "N/A";
+  document.getElementById("overlayMost").textContent =
+    data?.mostChosen || "N/A";
 
   overlay.style.display = "block";
-
-requestAnimationFrame(()=>{
-  setTimeout(fitOverlayText, 50);
-});
 
   launchConfetti();
 
@@ -323,47 +308,6 @@ function launchConfetti(){
     }
   })();
 }
-
-
-/* ---------------- TEXT SCALING ---------------- */
-function fitOverlayText(){
-
-  const box = document.getElementById("overlayContent");
-
-  const category = document.getElementById("overlayCategory");
-  const winnerTitle = document.getElementById("winnerTitle");
-  const winner = document.getElementById("overlayWinner");
-  const mostTitle = document.getElementById("mostTitle");
-  const most = document.getElementById("overlayMost");
-
-  if(!box) return;
-
-  let size = 140; // 🔥 start BIG
-
-  let guard = 0;
-
-  while(size > 40 && guard < 200){
-
-    category.style.fontSize = size + "px";
-    winnerTitle.style.fontSize = size + "px";
-    winner.style.fontSize = size + "px";
-    mostTitle.style.fontSize = size + "px";
-    most.style.fontSize = size + "px";
-
-    winner.querySelectorAll(".winner-line").forEach(el=>{
-      el.style.fontSize = size + "px";
-      el.style.lineHeight = "1.1";
-    });
-
-    if(box.scrollHeight <= box.clientHeight * 0.92){
-      break;
-    }
-
-    size -= 2; // 🔥 slow shrink = better size
-    guard++;
-  }
-}
-
 </script>
 
 </body>
