@@ -117,18 +117,18 @@ color:#ffd700;
 
 /* TEXT SIZES */
 #overlayCategory{
-font-size:84px;
+font-size:90px;
 font-weight:bold;
 }
 
 .overlay-section-title{
-font-size:74px;
+font-size:86px;
 text-decoration:underline;
 }
 
 #overlayWinner,
 #overlayMost{
-font-size:56px;
+font-size:74px;
 }
 
 .winner-line{
